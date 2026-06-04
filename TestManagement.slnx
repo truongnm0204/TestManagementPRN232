@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TestManagement.API/TestManagement.API.csproj" />
+  <Project Path="TestManagement.BAL/TestManagement.BAL.csproj" />
+  <Project Path="TestManagement.Client/TestManagement.Client.csproj" />
+  <Project Path="TestManagement.DAL/TestManagement.DAL.csproj" />
+</Solution>

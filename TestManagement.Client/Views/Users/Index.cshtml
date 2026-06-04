@@ -1,0 +1,151 @@
+@model TestManagement.Client.Models.Users.UserListViewModel
+@{
+    ViewData["Title"] = "Người dùng";
+}
+
+<div class="page-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">Quản lý người dùng</h1>
+            <p class="text-muted mb-0">Quản lý tài khoản Admin, Staff và Student.</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Tạo người dùng</button>
+    </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input name="keyword" value="@Model.Keyword" class="form-control" placeholder="Tìm theo họ tên hoặc email" />
+        </div>
+        <div class="col-md-2">
+            <select name="role" class="form-select">
+                <option value="">Tất cả vai trò</option>
+                <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
+                <option value="Staff" selected="@(Model.Role == "Staff")">Staff</option>
+                <option value="Student" selected="@(Model.Role == "Student")">Student</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="isActive" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="true" selected="@(Model.IsActive == true)">Đang hoạt động</option>
+                <option value="false" selected="@(Model.IsActive == false)">Bị khóa</option>
+            </select>
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">Tìm kiếm</button></div>
+        <div class="col-md-2"><a asp-action="Index" class="btn btn-outline-secondary w-100">Làm mới</a></div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th>Lần đăng nhập cuối</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Không có dữ liệu.</td></tr>
+                }
+                @foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td>@user.FullName</td>
+                        <td>@user.Email</td>
+                        <td><span class="badge text-bg-info">@user.Role</span></td>
+                        <td><span class="badge @(user.IsActive ? "text-bg-success" : "text-bg-secondary")">@(user.IsActive ? "Hoạt động" : "Bị khóa")</span></td>
+                        <td>@(user.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadUserForEdit(@user.Id)">Sửa</button>
+                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <input type="hidden" name="isActive" value="@(!user.IsActive)" />
+                                <button type="submit" class="btn btn-sm btn-outline-warning">@(user.IsActive ? "Khóa" : "Mở khóa")</button>
+                            </form>
+                            <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Users", new { id = user.Id })" data-delete-name="@user.FullName">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">Trang @Model.Page @(Model.Count.HasValue ? $"/ Tổng {Model.Count.Value} dòng" : string.Empty)</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-secondary @(Model.HasPrevious ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-role="@Model.Role" asp-route-isActive="@Model.IsActive" asp-route-page="@(Model.Page - 1)">Trước</a>
+            <a class="btn btn-outline-secondary @(Model.HasNext ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-role="@Model.Role" asp-route-isActive="@Model.IsActive" asp-route-page="@(Model.Page + 1)">Sau</a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form asp-action="Create" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header"><h5 class="modal-title">Tạo người dùng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Họ tên</label><input name="FullName" class="form-control" required maxlength="100" /></div>
+                    <div class="col-md-6"><label class="form-label">Email</label><input name="Email" type="email" class="form-control" required maxlength="100" /></div>
+                    <div class="col-md-6"><label class="form-label">Mật khẩu</label><input name="Password" type="password" class="form-control" required minlength="6" /></div>
+                    <div class="col-md-6"><label class="form-label">Số điện thoại</label><input name="PhoneNumber" class="form-control" maxlength="20" /></div>
+                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" class="form-select"><option value="Admin">Admin</option><option value="Staff">Staff</option><option value="Student" selected>Student</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Avatar URL</label><input name="AvatarUrl" class="form-control" maxlength="255" /></div>
+                    <div class="col-12"><div class="form-check"><input name="IsActive" value="true" class="form-check-input" type="checkbox" checked /><label class="form-check-label">Đang hoạt động</label></div></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form asp-action="Update" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editUserId" />
+            <div class="modal-header"><h5 class="modal-title">Cập nhật người dùng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Họ tên</label><input name="FullName" id="editUserFullName" class="form-control" required maxlength="100" /></div>
+                    <div class="col-md-6"><label class="form-label">Email</label><input id="editUserEmail" class="form-control" disabled /></div>
+                    <div class="col-md-6"><label class="form-label">Số điện thoại</label><input name="PhoneNumber" id="editUserPhoneNumber" class="form-control" maxlength="20" /></div>
+                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" id="editUserRole" class="form-select"><option value="Admin">Admin</option><option value="Staff">Staff</option><option value="Student">Student</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Avatar URL</label><input name="AvatarUrl" id="editUserAvatarUrl" class="form-control" maxlength="255" /></div>
+                    <div class="col-12"><div class="form-check"><input name="IsActive" value="true" id="editUserIsActive" class="form-check-input" type="checkbox" /><label class="form-check-label">Đang hoạt động</label></div></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
+        </form>
+    </div>
+</div>
+
+<partial name="_DeleteConfirmationModal" />
+
+@section Scripts {
+    <script>
+        async function loadUserForEdit(id) {
+            const response = await fetch(`@Url.Action("GetForEdit", "Users")?id=${id}`);
+            if (!response.ok) {
+                alert('Không thể tải thông tin người dùng để chỉnh sửa.');
+                return;
+            }
+            const user = await response.json();
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserFullName').value = user.fullName || '';
+            document.getElementById('editUserEmail').value = user.email || '';
+            document.getElementById('editUserPhoneNumber').value = user.phoneNumber || '';
+            document.getElementById('editUserAvatarUrl').value = user.avatarUrl || '';
+            document.getElementById('editUserRole').value = user.role || 'Student';
+            document.getElementById('editUserIsActive').checked = Boolean(user.isActive);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editUserModal')).show();
+        }
+    </script>
+}

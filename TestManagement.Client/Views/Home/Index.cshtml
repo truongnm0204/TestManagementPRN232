@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Tổng quan";
+}
+
+<div class="page-card p-4">
+    <h1 class="h3 mb-3">TestManagement</h1>
+    <p class="text-muted mb-4">Hệ thống quản lý bài test multiple choice.</p>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="row g-3">
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="col-md-4">
+                    <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý người dùng</a>
+                </div>
+            }
+            <div class="col-md-4">
+                <a asp-controller="Subjects" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý môn học</a>
+            </div>
+            <div class="col-md-4">
+                <a asp-controller="Questions" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý câu hỏi</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <a asp-controller="Auth" asp-action="Login" class="btn btn-primary">Đăng nhập để bắt đầu</a>
+    }
+</div>

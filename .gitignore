@@ -1,0 +1,69 @@
+# Build results
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.assets.json
+
+# Entity Framework
+Migrations/*Designer.cs
+
+# App settings with secrets
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json
+
+# Database files
+*.mdf
+*.ldf
+*.db
+*.sqlite
+*.sqlite3
+
+# Publish output
+publish/
+Publish/
+wwwroot/uploads/
+wwwroot/files/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# User secrets
+secrets.json
+
+# Node / frontend packages if any
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
