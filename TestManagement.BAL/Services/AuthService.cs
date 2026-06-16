@@ -23,7 +23,7 @@ public class AuthService : IAuthService
         _jwtSettings = jwtOptions.Value;
     }
 
-    public async Task<ServiceResult<LoginResponse>> LoginAsync(LoginRequest request)
+    public async Task<ServiceResult<LoginResponse>> LoginAsync(LoginRequest request )
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
