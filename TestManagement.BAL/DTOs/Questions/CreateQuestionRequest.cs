@@ -7,6 +7,13 @@ public class CreateQuestionRequest
     [Required]
     public int SubjectId { get; set; }
 
+    public int? TopicId { get; set; }
+    [MaxLength(30)]
+    [Required]
+    public string QuestionType { get; set; } = "SingleChoice";
+    [MaxLength(20)]
+    [Required]
+    public string SourceType { get; set; } = "Manual";
     [Required, MaxLength(2000)]
     public string Content { get; set; } = string.Empty;
 

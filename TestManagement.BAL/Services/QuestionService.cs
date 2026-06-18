@@ -56,6 +56,9 @@ public class QuestionService : IQuestionService
         var question = new Question
         {
             SubjectId = request.SubjectId,
+            TopicId = request.TopicId,
+            QuestionType = request.QuestionType,
+            SourceType = request.SourceType,
             Content = request.Content,
             Explanation = request.Explanation,
             Difficulty = request.Difficulty,
@@ -157,9 +160,9 @@ public class QuestionService : IQuestionService
             return "Câu hỏi phải có ít nhất 2 đáp án.";
         }
 
-        if (options.Count(x => x.IsCorrect) != 1)
+        if (options.Count(x => x.IsCorrect) == 0)
         {
-            return "Câu hỏi phải có đúng 1 đáp án đúng.";
+            return "Câu hỏi phải có ít nhất 1 đáp án đúng.";
         }
 
         if (options.Any(x => string.IsNullOrWhiteSpace(x.Label) || string.IsNullOrWhiteSpace(x.Content)))
