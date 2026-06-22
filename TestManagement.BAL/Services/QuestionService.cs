@@ -12,6 +12,8 @@ public class QuestionService : IQuestionService
     private static readonly string[] ValidStatuses = { "Active", "Inactive" };
     private readonly IQuestionRepository _questionRepository;
     private readonly ISubjectRepository _subjectRepository;
+    private static readonly string[] ValidQuestionTypes = { "SingleChoice", "MultipleChoice", "TrueFalse" };
+    private static readonly string[] ValidSourceTypes = { "Manual", "Import" };
 
     public QuestionService(IQuestionRepository questionRepository, ISubjectRepository subjectRepository)
     {
@@ -44,6 +46,9 @@ public class QuestionService : IQuestionService
     {
         var validationError = await ValidateQuestionRequestAsync(
             request.SubjectId,
+            request.QuestionType,
+            request.SourceType,
+            request.TopicId,
             request.Difficulty,
             request.Status,
             request.Options);
@@ -86,6 +91,9 @@ public class QuestionService : IQuestionService
 
         var validationError = await ValidateQuestionRequestAsync(
             request.SubjectId,
+            request.QuestionType,
+            request.SourceType,
+            request.TopicId,
             request.Difficulty,
             request.Status,
             request.Options);
@@ -96,6 +104,9 @@ public class QuestionService : IQuestionService
         }
 
         question.SubjectId = request.SubjectId;
+        question.TopicId = request.TopicId;
+        question.QuestionType = request.QuestionType;
+        question.SourceType = request.SourceType;
         question.Content = request.Content;
         question.Explanation = request.Explanation;
         question.Difficulty = request.Difficulty;
@@ -129,6 +140,9 @@ public class QuestionService : IQuestionService
 
     private async Task<string?> ValidateQuestionRequestAsync(
         int subjectId,
+        string questionType,
+        string sourceType,
+        int? topicId,
         string difficulty,
         string status,
         List<QuestionOptionRequest> options)
@@ -150,6 +164,34 @@ public class QuestionService : IQuestionService
             return "Môn học không tồn tại hoặc không active.";
         }
 
+        if (topicId.HasValue)
+        {
+            var topic = await _subjectRepository.GetTopicByIdAsync(topicId.Value);
+            if (topic == null || topic.SubjectId != subjectId)
+            {
+                return "Chủ đề không tồn tại hoặc không thuộc môn học đã chọn.";
+            }
+        }
+        if(questionType != null && !ValidQuestionTypes.Contains(questionType))
+        {
+            return "Loại câu hỏi không hợp lệ.";
+        }
+        if(sourceType != null && !ValidSourceTypes.Contains(sourceType))
+        {
+            return "Loại nguồn gốc câu hỏi không hợp lệ.";
+        }
+        if(questionType != null && questionType.Equals("SingleChoice", StringComparison.OrdinalIgnoreCase) && options.Count(x => x.IsCorrect) > 1)
+        {
+            return "Câu hỏi Single Choice chỉ được phép có một đáp án đúng.";
+        }
+        if(questionType != null && questionType.Equals("MultipleChoice", StringComparison.OrdinalIgnoreCase) && options.Count(x => x.IsCorrect) == 0)
+        {
+            return "Câu hỏi Multiple Choice phải có ít nhất một đáp án đúng.";
+        }
+        if(questionType != null && questionType.Equals("TrueFalse", StringComparison.OrdinalIgnoreCase) && options.Count != 2)
+        {
+            return "Câu hỏi True/False phải có đúng 2 đáp án.";
+        }
         return ValidateOptions(options);
     }
 
