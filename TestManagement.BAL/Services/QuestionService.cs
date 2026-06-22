@@ -3,6 +3,7 @@ using TestManagement.BAL.DTOs.Questions;
 using TestManagement.BAL.Services.Interfaces;
 using TestManagement.DAL.Models;
 using TestManagement.DAL.Repositories.Interfaces;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TestManagement.BAL.Services;
 
@@ -27,6 +28,9 @@ public class QuestionService : IQuestionService
         {
             Id = question.Id,
             SubjectId = question.SubjectId,
+            TopicId = question.TopicId,
+            QuestionType = question.QuestionType,
+            SourceType = question.SourceType,
             SubjectCode = question.Subject == null ? string.Empty : question.Subject.Code,
             SubjectName = question.Subject == null ? string.Empty : question.Subject.Name,
             Content = question.Content,
@@ -147,6 +151,8 @@ public class QuestionService : IQuestionService
         string status,
         List<QuestionOptionRequest> options)
     {
+
+        var correctOptionCount = options.Count(x => x.IsCorrect);
         if (!ValidDifficulties.Contains(difficulty))
         {
             return "Độ khó không hợp lệ.";
@@ -172,27 +178,39 @@ public class QuestionService : IQuestionService
                 return "Chủ đề không tồn tại hoặc không thuộc môn học đã chọn.";
             }
         }
-        if(questionType != null && !ValidQuestionTypes.Contains(questionType))
+
+        var optionValidationError = ValidateOptions(options);
+        if (optionValidationError != null)
+        {
+            return optionValidationError;
+        }
+        if (string.IsNullOrEmpty(questionType) || !ValidQuestionTypes.Contains(questionType))
         {
             return "Loại câu hỏi không hợp lệ.";
         }
-        if(sourceType != null && !ValidSourceTypes.Contains(sourceType))
+        if(!ValidSourceTypes.Contains(sourceType))
         {
             return "Loại nguồn gốc câu hỏi không hợp lệ.";
         }
-        if(questionType != null && questionType.Equals("SingleChoice", StringComparison.OrdinalIgnoreCase) && options.Count(x => x.IsCorrect) > 1)
+        if(questionType.Equals("SingleChoice", StringComparison.OrdinalIgnoreCase) && correctOptionCount != 1)
         {
             return "Câu hỏi Single Choice chỉ được phép có một đáp án đúng.";
         }
-        if(questionType != null && questionType.Equals("MultipleChoice", StringComparison.OrdinalIgnoreCase) && options.Count(x => x.IsCorrect) == 0)
+        if (questionType.Equals("MultipleChoice", StringComparison.OrdinalIgnoreCase) && correctOptionCount < 2)
         {
-            return "Câu hỏi Multiple Choice phải có ít nhất một đáp án đúng.";
+            return "Câu hỏi Multiple Choice phải có ít nhất hai đáp án đúng.";
         }
-        if(questionType != null && questionType.Equals("TrueFalse", StringComparison.OrdinalIgnoreCase) && options.Count != 2)
+        if(questionType.Equals("TrueFalse", StringComparison.OrdinalIgnoreCase))
         {
-            return "Câu hỏi True/False phải có đúng 2 đáp án.";
+            if(options.Count != 2)
+            {
+                return "Câu hỏi True/False phải có đúng 2 đáp án.";
+            }
+            if(options.Count(x=> x.IsCorrect) != 1) { 
+                return "Câu hỏi True/False phải có đúng 1 đáp án đúng.";
+            }
         }
-        return ValidateOptions(options);
+        return null;
     }
 
     private static string? ValidateOptions(List<QuestionOptionRequest> options)
@@ -239,6 +257,9 @@ public class QuestionService : IQuestionService
         {
             Id = question.Id,
             SubjectId = question.SubjectId,
+            TopicId = question.TopicId,
+            QuestionType = question.QuestionType,
+            SourceType = question.SourceType,
             SubjectCode = question.Subject?.Code ?? string.Empty,
             SubjectName = question.Subject?.Name ?? string.Empty,
             Content = question.Content,

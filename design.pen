@@ -1,0 +1,645 @@
+================================================================
+  QUIZ EXAM SYSTEM — UI DESIGN GUIDE
+  ASP.NET Core MVC + Razor Views + Bootstrap 5
+  Cập nhật: 22/06/2026
+================================================================
+
+MỤC LỤC
+--------
+ 0. Nguyên tắc chung & Design Token
+ 1. Layout Shell (_Layout.cshtml)
+ 2. Màn hình Đăng nhập (Auth/Login)
+ 3. Dashboard / Tổng quan (Home/Index)
+ 4. Quản lý Người dùng (Admin — Users/Index)
+ 5. Quản lý Môn học (Subjects/Index)
+ 6. Quản lý Chủ đề (Topics/Index)
+ 7. Quản lý Câu hỏi (Questions/Index)
+ 8. Quản lý Bài kiểm tra — Exam List (Exams/Index)
+ 9. Tạo / Chỉnh sửa Bài kiểm tra (Exams/Create + Edit)
+10. Giao Bài kiểm tra cho lớp (ExamAssignments)
+11. Màn hình Làm bài (Student — Exams/Take)
+12. Kết quả Bài làm (Exams/Result)
+13. Quản lý Lớp học (Classes/Index)
+14. Thông báo (Notifications)
+15. Component dùng chung (Shared Partials)
+16. Lỗi UI thường gặp & cách tránh
+
+================================================================
+ 0. NGUYÊN TẮC CHUNG & DESIGN TOKEN
+================================================================
+
+PALETTE
+  --color-primary:   #2563eb   (Blue 600 — hành động chính)
+  --color-secondary: #64748b   (Slate 500 — phụ)
+  --color-success:   #16a34a   (Green 600)
+  --color-danger:    #dc2626   (Red 600)
+  --color-warning:   #d97706   (Amber 600)
+  --color-info:      #0891b2   (Cyan 600)
+  --color-bg:        #f8fafc   (Slate 50 — nền tổng thể)
+  --color-surface:   #ffffff   (nền card / panel)
+  --color-border:    #e2e8f0   (viền nhẹ)
+  --color-text:      #1e293b   (Slate 800)
+  --color-muted:     #64748b   (Slate 500)
+
+TYPOGRAPHY
+  Font: Inter (Google Fonts)
+  h1: 1.5rem / fw-semibold
+  h2: 1.25rem / fw-semibold
+  body: 0.9375rem (15px)
+  small/caption: 0.8125rem (13px)
+
+SPACING
+  Sidebar width: 220px (thu lại còn 56px khi collapsed — tương lai)
+  Topbar height: 56px
+  Content padding: 24px (py-4 px-4 Bootstrap)
+  Card radius: 0.5rem (rounded-3)
+  Card shadow: 0 1px 3px rgba(0,0,0,.08)
+
+BADGE STATUS
+  Draft      → badge bg-secondary
+  Published  → badge bg-success
+  Closed     → badge bg-dark
+  Active     → badge bg-success
+  Inactive   → badge bg-secondary
+  Approved   → badge bg-primary
+  Submitted  → badge bg-info text-dark
+  Easy       → badge bg-success
+  Medium     → badge bg-warning text-dark
+  Hard       → badge bg-danger
+
+BUTTON CONVENTION
+  Hành động chính (Tạo, Lưu, Xuất bản)  → btn btn-primary
+  Hành động phụ (Hủy, Quay lại)          → btn btn-outline-secondary
+  Chỉnh sửa                               → btn btn-sm btn-outline-primary
+  Xóa                                     → btn btn-sm btn-outline-danger
+  Tìm kiếm                                → btn btn-outline-primary
+  Reset filter                            → btn btn-outline-secondary (link a)
+
+================================================================
+ 1. LAYOUT SHELL  (_Layout.cshtml)
+================================================================
+
+MỤC TIÊU:
+  Admin dashboard shell: topbar cố định trên, sidebar bên trái,
+  vùng content cuộn độc lập.
+
+THÀNH PHẦN:
+  [Topbar]
+    - Brand logo + tên app bên trái
+    - Nút toggle sidebar (hamburger) dành cho mobile
+    - Avatar + tên + role dropdown bên phải (Đổi mật khẩu / Đăng xuất)
+
+  [Sidebar]
+    - Nav-link có icon (Bootstrap Icons bi-*)
+    - Active state: bg-primary text-white rounded
+    - Nhóm nav theo role (Admin / Teacher / Student)
+    - Footer sidebar: version app
+
+  [Content]
+    - Cuộn riêng, không ảnh hưởng sidebar
+    - Breadcrumb ở đầu (tùy page)
+
+SITE.CSS (tối thiểu):
+  ┌──────────────────────────────────────────────────────────┐
+  │ body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+  │
+  │ .app-header {
+  │   height: 56px;
+  │   position: fixed; top: 0; left: 0; right: 0; z-index: 1030;
+  │   background: #2563eb !important;
+  │ }
+  │
+  │ .app-sidebar {
+  │   width: 220px;
+  │   position: fixed; top: 56px; bottom: 0; left: 0;
+  │   overflow-y: auto;
+  │   background: #ffffff;
+  │   border-right: 1px solid #e2e8f0;
+  │   padding: 1rem 0.75rem;
+  │ }
+  │
+  │ .app-sidebar .nav-link {
+  │   color: #1e293b; border-radius: .375rem;
+  │   padding: .45rem .75rem; font-size: .9rem;
+  │   display: flex; align-items: center; gap: .5rem;
+  │ }
+  │ .app-sidebar .nav-link:hover { background: #f1f5f9; }
+  │ .app-sidebar .nav-link.active {
+  │   background: #2563eb; color: #fff; font-weight: 600;
+  │ }
+  │
+  │ .app-content {
+  │   margin-left: 220px;
+  │   margin-top: 56px;
+  │   min-height: calc(100vh - 56px);
+  │ }
+  │
+  │ /* Khi chưa login — không có sidebar */
+  │ .app-content.no-sidebar { margin-left: 0; }
+  │
+  │ .page-card {
+  │   background: #fff;
+  │   border-radius: .5rem;
+  │   box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  │ }
+  │
+  │ .text-truncate-2 {
+  │   display: -webkit-box;
+  │   -webkit-line-clamp: 2;
+  │   -webkit-box-orient: vertical;
+  │   overflow: hidden;
+  │ }
+  └──────────────────────────────────────────────────────────┘
+
+SIDEBAR NAV ITEMS (theo role):
+  [Tất cả]
+    🏠 bi-house         → Home/Index       (Tổng quan)
+    📋 bi-journal-text  → Exams/Index      (Bài kiểm tra)
+
+  [Admin + Teacher thêm]
+    ❓ bi-question-circle → Questions/Index (Câu hỏi)
+    📚 bi-book            → Subjects/Index  (Môn học)
+    🏷️  bi-tags           → Topics/Index    (Chủ đề)
+
+  [Admin thêm]
+    👥 bi-people          → Users/Index     (Người dùng)
+    🏫 bi-building        → Classes/Index   (Lớp học)
+
+  [Student]
+    🔔 bi-bell            → Notifications   (Thông báo)
+
+RAZOR SNIPPET (sidebar nav-link active):
+  <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Questions" ? "active" : "")"
+     asp-controller="Questions" asp-action="Index">
+    <i class="bi bi-question-circle"></i> Câu hỏi
+  </a>
+
+UX GỢI Ý:
+  - Highlight nav-link active dựa vào RouteData (controller match).
+  - Thêm tooltip cho icon khi sidebar thu nhỏ sau này.
+  - Hiển thị role badge nhỏ bên cạnh tên user trên topbar.
+
+LỖI DỄ GẶP:
+  ✗ Sidebar che topbar → dùng top: 56px cho sidebar
+  ✗ Content bị sidebar phủ → margin-left: 220px cho .app-content
+  ✗ Scroll cả trang thay vì content → đặt overflow-y: auto trên .app-content
+     và body { overflow: hidden } (nếu muốn full-height layout)
+
+================================================================
+ 2. ĐĂNG NHẬP  (Auth/Login)
+================================================================
+
+MỤC TIÊU: Trang login trung tâm, sạch, không sidebar.
+
+THÀNH PHẦN:
+  - Card 400px giữa màn hình
+  - Logo / tên app trên card
+  - Input: Email, Password (type=password)
+  - Checkbox: Ghi nhớ đăng nhập
+  - Button: Đăng nhập (btn-primary w-100)
+  - Alert lỗi (asp-validation-summary)
+
+LAYOUT:
+  <body class="d-flex align-items-center justify-content-center min-vh-100"
+        style="background:#f8fafc">
+    <div class="card shadow-sm" style="width:400px">
+      <div class="card-body p-4">
+        <h1 class="h4 text-center mb-1">Quiz Exam System</h1>
+        <p class="text-center text-muted mb-4">Đăng nhập để tiếp tục</p>
+        <form asp-action="Login" method="post">
+          ...email, password fields...
+          <button class="btn btn-primary w-100 mt-2">Đăng nhập</button>
+        </form>
+      </div>
+    </div>
+  </body>
+
+CSS: Trang này dùng _LoginLayout.cshtml riêng (không có sidebar/topbar).
+
+UX GỢI Ý:
+  - Nút toggle show/hide password (bi-eye).
+  - Hiển thị lỗi rõ: "Email hoặc mật khẩu không đúng" (không nói cái nào sai).
+  - Sau login chuyển về returnUrl nếu có.
+
+LỖI DỄ GẶP:
+  ✗ Dùng _Layout chính cho trang login → sidebar/topbar thừa.
+  ✗ Validation hiển thị sai vì thiếu @addTagHelper trong _ViewImports.
+
+================================================================
+ 3. DASHBOARD / TỔNG QUAN  (Home/Index)
+================================================================
+
+MỤC TIÊU: Cái nhìn nhanh về hệ thống theo role.
+
+THÀNH PHẦN:
+  [Admin]
+    - 4 stat card: Tổng User / Bài kiểm tra / Câu hỏi / Lớp học
+    - Table: Bài kiểm tra mới nhất (5 dòng)
+    - Table: User mới nhất (5 dòng)
+
+  [Teacher]
+    - 3 stat card: Câu hỏi tôi tạo / Bài kiểm tra tôi tạo / Lớp đang dạy
+    - Table: Bài kiểm tra gần đây của tôi
+
+  [Student]
+    - 2 stat card: Bài làm đã nộp / Bài chưa làm
+    - Table: Bài kiểm tra được giao gần đây
+    - Nút nhanh: "Làm bài ngay" nếu có exam đang mở
+
+STAT CARD TEMPLATE:
+  <div class="col-md-3">
+    <div class="page-card p-3 d-flex align-items-center gap-3">
+      <div class="rounded-3 p-3" style="background:#eff6ff">
+        <i class="bi bi-journal-text fs-4 text-primary"></i>
+      </div>
+      <div>
+        <div class="text-muted small">Bài kiểm tra</div>
+        <div class="fs-4 fw-bold">@Model.ExamCount</div>
+      </div>
+    </div>
+  </div>
+
+UX GỢI Ý:
+  - Stat card màu icon phân biệt theo loại: blue/green/amber/red.
+  - Thêm liên kết "Xem tất cả →" ở footer mỗi table.
+
+================================================================
+ 4. QUẢN LÝ NGƯỜI DÙNG  (Admin — Users/Index)
+================================================================
+
+MỤC TIÊU: Admin xem, tạo, sửa, khoá/mở khoá tài khoản người dùng.
+
+THÀNH PHẦN:
+  - Page header: "Người dùng" + nút "Tạo người dùng"
+  - Filter bar: keyword | role | isActive | [Tìm] [Xoá filter]
+  - Table: Avatar | Họ tên | Email | SĐT | Role | Trạng thái | Ngày tạo | Hành động
+  - Actions per row: [Sửa] [Khoá / Mở khoá] [Đặt lại mật khẩu]
+  - Modal: Tạo người dùng (form)
+  - Modal: Sửa người dùng (form, load via AJAX)
+  - Modal: Xác nhận xoá (_DeleteConfirmationModal)
+  - Pagination
+
+BADGE ROLE:
+  Admin   → badge bg-danger
+  Teacher → badge bg-primary
+  Student → badge bg-success
+
+BADGE STATUS:
+  Active   → badge bg-success
+  Inactive → badge bg-secondary
+
+COLUMNS TABLE:
+  | # | Họ tên          | Email              | Role    | Trạng thái | Ngày tạo  | Hành động |
+  |---|-----------------|--------------------|---------| -----------|-----------|-----------|
+  | 1 | Nguyễn Văn A    | a@gmail.com        | Teacher | Active     | 10/06/26  | Sửa Khoá  |
+
+UX GỢI Ý:
+  - Avatar placeholder = chữ cái đầu tên, background màu ngẫu nhiên cố định.
+  - Nút "Khoá" đổi thành "Mở khoá" theo trạng thái.
+  - Hành động "Đặt lại mật khẩu" → gửi password tạm về email.
+
+LỖI DỄ GẶP:
+  ✗ Không lọc IsDeleted=true → hiện user đã xoá.
+  ✗ Email trùng khi tạo → thông báo rõ ràng ngay form.
+
+================================================================
+ 5. QUẢN LÝ MÔN HỌC  (Subjects/Index)
+================================================================
+
+MỤC TIÊU: Admin/Teacher quản lý danh mục môn học.
+
+THÀNH PHẦN:
+  - Page header + nút "Thêm môn học"
+  - Table: Code | Tên môn | Mô tả | Số câu hỏi | Hành động
+  - Modal tạo/sửa (inline form nhỏ)
+  - Modal xác nhận xoá
+
+TABLE COLUMNS:
+  | Code | Tên môn học    | Mô tả                  | Câu hỏi | Hành động |
+  |------|----------------|------------------------|---------|-----------|
+  | ENG  | Tiếng Anh      | Kỹ năng đọc hiểu...    | 120     | Sửa Xoá  |
+
+UX GỢI Ý:
+  - Số câu hỏi là link → lọc câu hỏi theo môn.
+  - Không cho xoá nếu đã có câu hỏi → thông báo rõ.
+
+================================================================
+ 6. QUẢN LÝ CHỦ ĐỀ  (Topics/Index)
+================================================================
+
+THÀNH PHẦN:
+  - Filter: subject dropdown
+  - Table: Môn học | Tên chủ đề | Mô tả | Hành động
+  - Modal tạo/sửa
+
+================================================================
+ 7. QUẢN LÝ CÂU HỎI  (Questions/Index)  ← ĐÃ CÓ, CẢI THIỆN
+================================================================
+
+MỤC TIÊU: Admin/Teacher tạo, sửa, xoá câu hỏi multiple-choice.
+
+HIỆN TRẠNG: Đã có Index.cshtml. Cần cải thiện:
+
+CẢI THIỆN UI:
+  a) Thêm cột Topic (hiện chỉ có Subject)
+  b) Thêm filter Topic bên cạnh Subject filter
+  c) Preview câu hỏi khi hover / click "Xem"
+  d) Badge Difficulty màu: Easy=green, Medium=amber, Hard=red
+  e) Empty state đẹp hơn (icon + mô tả thay vì chỉ text)
+
+EMPTY STATE TEMPLATE:
+  <tr>
+    <td colspan="6" class="text-center py-5">
+      <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+      <span class="text-muted">Chưa có câu hỏi nào.<br>
+        Nhấn <strong>"Tạo câu hỏi"</strong> để thêm mới.
+      </span>
+    </td>
+  </tr>
+
+FILTER BAR CẢI THIỆN:
+  [keyword 3col] [Subject 2col] [Topic 2col] [Difficulty 1.5col]
+  [Status 1.5col] [Tìm 1col] [Reset 1col]
+
+UX GỢI Ý:
+  - Highlight keyword trong content (js simple replace).
+  - Giới hạn preview content 150 ký tự + "...".
+  - Ctrl+click → mở modal preview không load trang.
+
+================================================================
+ 8. QUẢN LÝ BÀI KIỂM TRA  (Exams/Index)
+================================================================
+
+MỤC TIÊU:
+  Admin/Teacher: xem danh sách, tạo, sửa, publish, đóng exam.
+  Student: xem danh sách exam được giao, làm bài.
+
+PHÂN QUYỀN HIỂN THỊ:
+  Admin/Teacher → thấy tất cả + cột "Người tạo" + nút Publish/Close
+  Student       → chỉ thấy exam đã assigned + cột "Hạn nộp" + nút "Làm bài"
+
+TABLE (Admin/Teacher):
+  | Tiêu đề          | Môn học | Thời gian | Trạng thái | Giao cho | Ngày tạo | Hành động        |
+  |------------------|---------|-----------|------------|----------|----------|------------------|
+  | Mid-term Test 1  | ENG     | 60 phút   | Draft      | 2 lớp    | 10/06/26 | Sửa Publish Xoá |
+
+TABLE (Student):
+  | Tiêu đề          | Môn học | Thời gian | Hạn làm         | Trạng thái | Hành động |
+  |------------------|---------|-----------|-----------------|------------|-----------|
+  | Mid-term Test 1  | ENG     | 60 phút   | 25/06/26 23:59  | Chưa làm   | Làm bài   |
+
+STATUS BADGE:
+  Draft     → secondary
+  Published → success
+  Closed    → dark
+  Submitted → info text-dark  (Student đã nộp)
+  Passed    → success         (Student qua)
+  Failed    → danger          (Student trượt)
+
+FILTER BAR:
+  [keyword] [subject] [status] [Tìm] [Reset]
+
+UX GỢI Ý:
+  - Nút "Làm bài" disable nếu chưa đến AvailableFrom hoặc đã hết AvailableTo.
+  - Hiển thị countdown timer "Còn X ngày" khi sắp đến hạn.
+  - Nút Publish chỉ enable khi có câu hỏi trong exam.
+
+LỖI DỄ GẶP:
+  ✗ Student thấy exam chưa được assign → query phải join ExamAssignment.
+  ✗ Nút Publish không check số câu hỏi → exam rỗng bị publish.
+
+================================================================
+ 9. TẠO / CHỈNH SỬA BÀI KIỂM TRA  (Exams/Create + Edit)
+================================================================
+
+MỤC TIÊU: Form đầy đủ để cấu hình exam.
+
+LAYOUT: Page riêng (không modal vì phức tạp).
+
+CÁC SECTION:
+  [1] Thông tin cơ bản
+      - Tiêu đề*
+      - Môn học* (dropdown)
+      - Mô tả (textarea)
+      - Thời gian làm bài (phút)*
+      - Giới hạn lần làm (số)
+
+  [2] Cài đặt thời gian
+      - Từ ngày (datetime-local)
+      - Đến ngày (datetime-local)
+
+  [3] Cài đặt hiển thị
+      - Trộn câu hỏi (checkbox)
+      - Trộn đáp án (checkbox)
+      - Hiện kết quả ngay (checkbox)
+      - Hiện đáp án đúng (checkbox)
+
+  [4] Danh sách câu hỏi
+      - Transfer list: [Pool câu hỏi bên trái] ←→ [Câu hỏi đã chọn bên phải]
+      - Hoặc đơn giản hơn: Table câu hỏi + checkbox chọn
+      - Hiện: Số câu đã chọn / Tổng điểm
+
+BUTTON FOOTER:
+  [Hủy] [Lưu nháp] [Lưu & Xem trước]
+
+UX GỢI Ý:
+  - Validate: ngày kết thúc > ngày bắt đầu.
+  - Auto-save nháp sau 30s nếu có thay đổi.
+  - Preview exam trước khi Publish.
+
+================================================================
+10. GIAO BÀI CHO LỚP  (ExamAssignments)
+================================================================
+
+MỤC TIÊU: Teacher assign exam cho một/nhiều lớp.
+
+THÀNH PHẦN:
+  - Dropdown chọn lớp (multi-select hoặc checkbox list)
+  - Ngày mở / Ngày đóng (có thể override)
+  - Danh sách lớp đã giao + nút Gỡ giao
+  - Table: Lớp | Từ ngày | Đến ngày | Số SV đã làm | Hành động
+
+================================================================
+11. MÀN HÌNH LÀM BÀI  (Student — Exams/Take)
+================================================================
+
+MỤC TIÊU: Student làm bài tập trung, không bị phân tán.
+
+LAYOUT ĐẶC BIỆT: Không sidebar, topbar tối giản.
+
+THÀNH PHẦN:
+  [Topbar tối giản]
+    - Tên bài kiểm tra
+    - Countdown timer (HH:MM:SS) — màu đỏ khi < 5 phút
+    - Nút Nộp bài (btn-danger)
+
+  [Content]
+    - Tiến trình: "Câu X / Y" + progress bar
+    - Nội dung câu hỏi (to, rõ)
+    - 4 radio option (A, B, C, D) — mỗi option là card clickable
+    - Navigation: [← Câu trước] [Câu sau →]
+
+  [Sidebar mini bên phải (optional)]
+    - Grid số câu: màu xanh = đã trả lời, xám = chưa
+    - Click → nhảy đến câu đó
+
+OPTION CARD TEMPLATE:
+  <div class="option-card border rounded-3 p-3 mb-2 d-flex gap-3 align-items-start"
+       style="cursor:pointer" onclick="selectOption(this, 0)">
+    <span class="badge bg-primary">A</span>
+    <span>Nội dung đáp án A</span>
+  </div>
+  /* CSS: .option-card.selected { border-color: #2563eb; background: #eff6ff } */
+
+SUBMIT CONFIRM MODAL:
+  "Bạn còn X câu chưa trả lời. Bạn có chắc muốn nộp bài?"
+  [Tiếp tục làm] [Nộp bài]
+
+UX GỢI Ý:
+  - Lưu câu trả lời vào localStorage mỗi khi chọn (đề phòng mất mạng).
+  - Auto-submit khi hết giờ (setInterval check).
+  - Disable nút Back của trình duyệt trong khi làm bài.
+
+LỖI DỄ GẶP:
+  ✗ Form submit khi nhấn Enter → ngăn bằng @onkeydown="return event.key !== 'Enter'"
+  ✗ Timer bị reset khi F5 → lưu startTime vào server session.
+
+================================================================
+12. KẾT QUẢ BÀI LÀM  (Exams/Result)
+================================================================
+
+MỤC TIÊU: Hiển thị kết quả sau khi nộp bài.
+
+THÀNH PHẦN:
+  [Header result card]
+    - Tên bài kiểm tra
+    - Điểm: X / 10 (lớn, nổi bật)
+    - Đúng: X câu | Sai: Y câu | Bỏ qua: Z câu
+    - Status: PASSED (green) / FAILED (red)
+    - Thời gian làm: XX phút
+
+  [Detail (nếu ShowCorrectAnswers = true)]
+    - List câu hỏi + đáp án student chọn + đáp án đúng
+    - Icon ✓ (green) / ✗ (red) per câu
+    - Explanation nếu có
+
+BUTTON:
+  [Về trang Bài kiểm tra] [Xem lại đáp án chi tiết]
+
+================================================================
+13. QUẢN LÝ LỚP HỌC  (Classes/Index)
+================================================================
+
+MỤC TIÊU: Admin/Teacher quản lý lớp + danh sách học sinh.
+
+THÀNH PHẦN:
+  - Table: Mã lớp | Tên lớp | Giáo viên | Số học sinh | Hành động
+  - Modal tạo/sửa lớp
+  - Tab detail lớp: [Thông tin] [Danh sách học sinh] [Bài kiểm tra]
+  - Thêm/Xoá học sinh khỏi lớp (multi-select)
+
+================================================================
+14. THÔNG BÁO  (Notifications)
+================================================================
+
+THÀNH PHẦN:
+  - Bell icon trên topbar có badge số chưa đọc
+  - Dropdown 5 thông báo gần nhất
+  - Trang full: list tất cả thông báo, phân trang
+  - Badge: Chưa đọc (fw-bold), Đã đọc (text-muted)
+  - Click → mark as read + navigate
+
+================================================================
+15. COMPONENT DÙNG CHUNG  (Shared Partials)
+================================================================
+
+_Alert.cshtml (đã có):
+  - Hiển thị TempData["Success"] / TempData["Error"]
+  - Auto dismiss sau 4s (JS)
+
+_DeleteConfirmationModal.cshtml (đã có):
+  - Dùng lại cho mọi hành động xoá
+  - js-delete class + data-delete-url + data-delete-name
+
+_Pagination.cshtml (NÊN TẠO):
+  @model PaginationViewModel
+  Dùng chung cho mọi trang có phân trang.
+
+_StatusBadge.cshtml (NÊN TẠO):
+  @model string  (status string)
+  Tự map sang badge class.
+
+_EmptyState.cshtml (NÊN TẠO):
+  @{ string icon = ViewData["EmptyIcon"]?.ToString() ?? "inbox"; }
+  @{ string message = ViewData["EmptyMessage"]?.ToString() ?? "Không có dữ liệu."; }
+
+================================================================
+16. LỖI UI THƯỜNG GẶP & CÁCH TRÁNH
+================================================================
+
+1. Sidebar che content
+   ✗ Nguyên nhân: margin-left thiếu hoặc sai
+   ✓ Fix: .app-content { margin-left: 220px; margin-top: 56px }
+
+2. Topbar bị cuộn theo trang
+   ✗ Nguyên nhân: không set position: fixed
+   ✓ Fix: .app-header { position: fixed; z-index: 1030; }
+
+3. Modal không đóng sau submit lỗi server
+   ✓ Fix: Nếu ModelState invalid, redirect về trang + TempData["Error"]
+          hoặc trả về JSON + xử lý client-side.
+
+4. Table mobile bị vỡ layout
+   ✓ Fix: Bọc table trong <div class="table-responsive">
+
+5. Form validation không chạy
+   ✓ Fix: Thêm @section Scripts { <partial name="_ValidationScriptsPartial" /> }
+          và @Html.ValidationMessageFor() hoặc asp-validation-for.
+
+6. Badge status hard-code class trong view
+   ✓ Fix: Dùng helper method hoặc _StatusBadge partial để tập trung logic.
+
+7. Không có empty state
+   ✓ Fix: Luôn check @if(!Model.Items.Any()) và hiện UI đẹp.
+
+8. Nút xoá không có confirm
+   ✓ Fix: Dùng js-delete class + _DeleteConfirmationModal, KHÔNG dùng onclick="confirm()".
+
+9. Pagination mất filter params
+   ✓ Fix: Luôn truyền đủ asp-route-keyword, asp-route-status... trong pagination links.
+
+10. Người dùng thấy action không có quyền
+    ✓ Fix: @if(User.IsInRole("Admin") || User.IsInRole("Teacher")) bọc ngoài button.
+
+================================================================
+  KẾ HOẠCH THỰC HIỆN (ƯU TIÊN)
+================================================================
+
+PHASE 1 — NỀN TẢNG (làm ngay)
+  [ ] Cập nhật site.css với design token + layout CSS
+  [ ] Cập nhật _Layout.cshtml: topbar fixed, sidebar icons, active state
+  [ ] Tạo _LoginLayout.cshtml riêng không sidebar
+  [ ] Tạo _Pagination.cshtml partial dùng chung
+
+PHASE 2 — CORE SCREENS
+  [ ] Home/Index: stat cards + quick tables theo role
+  [ ] Exams/Index: phân quyền view, badge status
+  [ ] Exams/Create + Edit: form đầy đủ
+  [ ] Exams/Take: layout làm bài + timer
+  [ ] Exams/Result: kết quả đẹp
+
+PHASE 3 — MANAGEMENT SCREENS
+  [ ] Users/Index: đầy đủ CRUD + badge role
+  [ ] Classes/Index: CRUD + assign student
+  [ ] ExamAssignments: giao bài cho lớp
+  [ ] Notifications: bell + dropdown + full page
+
+PHASE 4 — POLISH
+  [ ] Responsive mobile (navbar collapse đúng)
+  [ ] _EmptyState partial thống nhất
+  [ ] _StatusBadge helper
+  [ ] Toast notifications thay Alert cứng
+
+================================================================
+  END OF DESIGN.PEN
+================================================================
