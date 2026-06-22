@@ -13,13 +13,15 @@ public class QuestionService : IQuestionService
     private static readonly string[] ValidStatuses = { "Active", "Inactive" };
     private readonly IQuestionRepository _questionRepository;
     private readonly ISubjectRepository _subjectRepository;
+    private readonly ITopicRepository _topicRepository;
     private static readonly string[] ValidQuestionTypes = { "SingleChoice", "MultipleChoice", "TrueFalse" };
     private static readonly string[] ValidSourceTypes = { "Manual", "Import" };
 
-    public QuestionService(IQuestionRepository questionRepository, ISubjectRepository subjectRepository)
+    public QuestionService(IQuestionRepository questionRepository, ISubjectRepository subjectRepository, ITopicRepository topicRepository)
     {
         _questionRepository = questionRepository;
         _subjectRepository = subjectRepository;
+        _topicRepository = topicRepository;
     }
 
     public IQueryable<QuestionODataResponse> GetODataQueryable()
@@ -172,7 +174,7 @@ public class QuestionService : IQuestionService
 
         if (topicId.HasValue)
         {
-            var topic = await _subjectRepository.GetTopicByIdAsync(topicId.Value);
+            var topic = await _topicRepository.GetActiveByIdAsync(topicId.Value);
             if (topic == null || topic.SubjectId != subjectId)
             {
                 return "Chủ đề không tồn tại hoặc không thuộc môn học đã chọn.";

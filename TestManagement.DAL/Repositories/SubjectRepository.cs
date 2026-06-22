@@ -41,10 +41,7 @@ public class SubjectRepository : Repository<Subject>, ISubjectRepository
             .Where(x => !x.IsDeleted);
     }
 
-    public async Task<Topic?> GetTopicByIdAsync(int value)
-    {
-        return await Context.Topics.FirstOrDefaultAsync(x => x.Id == value && x.Status == "Active");
-    }
+    
 
    
 }
