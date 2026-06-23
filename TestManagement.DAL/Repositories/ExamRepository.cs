@@ -20,7 +20,7 @@ namespace TestManagement.DAL.Repositories
             return await Context.Exams
                 .Include(x=> x.Subject)
                 .Include(x=> x.Creator)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 
         public IQueryable<Exam> GetQueryable()
@@ -29,6 +29,6 @@ namespace TestManagement.DAL.Repositories
                 .Include(x => x.Subject)
                 .Include(x => x.Creator)
                 .Where(x=> !x.IsDeleted);
-        }
+        }   
     }
 }
