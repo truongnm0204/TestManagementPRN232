@@ -11,180 +11,402 @@
         </div>
         @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
         {
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuestionModal">Tạo câu hỏi</button>
-        }
-    </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuestionModal">Tạo câu
+                hỏi</button>
+            }
+        </div>
 
-    <form method="get" class="row g-2 mb-3">
-        <div class="col-md-3"><input name="keyword" value="@Model.Keyword" class="form-control" placeholder="Tìm nội dung câu hỏi" /></div>
-        <div class="col-md-3">
-            <select name="subjectId" class="form-select">
-                <option value="">Tất cả môn học</option>
-                @foreach (var subject in Model.Subjects)
-                {
-                    <option value="@subject.Value" selected="@(Model.SubjectId?.ToString() == subject.Value)">@subject.Text</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select name="difficulty" class="form-select">
-                <option value="">Độ khó</option>
-                <option value="Easy" selected="@(Model.Difficulty == "Easy")">Easy</option>
-                <option value="Medium" selected="@(Model.Difficulty == "Medium")">Medium</option>
-                <option value="Hard" selected="@(Model.Difficulty == "Hard")">Hard</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select name="status" class="form-select">
-                <option value="">Trạng thái</option>
-                <option value="Active" selected="@(Model.Status == "Active")">Active</option>
-                <option value="Inactive" selected="@(Model.Status == "Inactive")">Inactive</option>
-            </select>
-        </div>
-        <div class="col-md-1"><button type="submit" class="btn btn-outline-primary w-100">Tìm</button></div>
-        <div class="col-md-1"><a asp-action="Index" class="btn btn-outline-secondary w-100">Mới</a></div>
-    </form>
-
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Môn học</th>
-                    <th>Nội dung</th>
-                    <th>Độ khó</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
-                    <th class="text-end">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Items.Any())
-                {
-                    <tr><td colspan="6" class="text-center text-muted py-4">Không có dữ liệu.</td></tr>
-                }
-                @foreach (var question in Model.Items)
-                {
-                    <tr>
-                        <td><span class="fw-semibold">@question.SubjectCode</span><br /><small class="text-muted">@question.SubjectName</small></td>
-                        <td><div class="text-truncate-2" style="max-width: 520px;">@question.Content</div></td>
-                        <td><span class="badge text-bg-info">@question.Difficulty</span></td>
-                        <td><span class="badge @(question.Status == "Active" ? "text-bg-success" : "text-bg-secondary")">@question.Status</span></td>
-                        <td>@question.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        <td class="text-end">
-                            @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
-                            {
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadQuestionForEdit(@question.Id)">Sửa</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Questions", new { id = question.Id })" data-delete-name="câu hỏi #@question.Id">Xóa</button>
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-md-3"><input name="keyword" value="@Model.Keyword" class="form-control"
+                                             placeholder="Tìm nội dung câu hỏi" /></div>
+                <div class="col-md-3">
+                    <select name="subjectId" class="form-select">
+                        <option value="">Tất cả môn học</option>
+                        @foreach (var subject in Model.Subjects)
+                        {
+                            <!option value="@subject.Value" @(Model.SubjectId?.ToString() == subject.Value ? "selected" : "")>
+                                @subject.Text</!option>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center">
-        <span class="text-muted">Trang @Model.Page @(Model.Count.HasValue ? $"/ Tổng {Model.Count.Value} dòng" : string.Empty)</span>
-        <div class="btn-group">
-            <a class="btn btn-outline-secondary @(Model.HasPrevious ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-subjectId="@Model.SubjectId" asp-route-difficulty="@Model.Difficulty" asp-route-status="@Model.Status" asp-route-page="@(Model.Page - 1)">Trước</a>
-            <a class="btn btn-outline-secondary @(Model.HasNext ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-subjectId="@Model.SubjectId" asp-route-difficulty="@Model.Difficulty" asp-route-status="@Model.Status" asp-route-page="@(Model.Page + 1)">Sau</a>
-        </div>
-    </div>
-</div>
-
-@if (User.IsInRole("Admin") || User.IsInRole("Staff"))
-{
-    <div class="modal fade" id="createQuestionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <form asp-action="Create" method="post" class="modal-content">
-                @Html.AntiForgeryToken()
-                <div class="modal-header"><h5 class="modal-title">Tạo câu hỏi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-4"><label class="form-label">Môn học</label><select name="SubjectId" class="form-select" required><option value="">Chọn môn học</option>@foreach (var subject in Model.Subjects) { <option value="@subject.Value">@subject.Text</option> }</select></div>
-                        <div class="col-md-4"><label class="form-label">Độ khó</label><select name="Difficulty" class="form-select"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
-                        <div class="col-md-4"><label class="form-label">Trạng thái</label><select name="Status" class="form-select"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                        <div class="col-12"><label class="form-label">Nội dung</label><textarea name="Content" class="form-control" rows="3" required maxlength="2000"></textarea></div>
-                        <div class="col-12"><label class="form-label">Giải thích</label><textarea name="Explanation" class="form-control" rows="2" maxlength="2000"></textarea></div>
+                        </select>
                     </div>
-                    <hr />
-                    <h6>Đáp án</h6>
-                    @for (var i = 0; i < 4; i++)
+                    <div class="col-md-2">
+                        <select name="difficulty" class="form-select">
+                            <option value="">Tất cả độ khó</option>
+                            <!option value="Easy" @(Model.Difficulty == "Easy" ? "selected" : "")>Easy</!option>
+                            <!option value="Medium" @(Model.Difficulty == "Medium" ? "selected" : "")>Medium</!option>
+                            <!option value="Hard" @(Model.Difficulty == "Hard" ? "selected" : "")>Hard</!option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="">Tất cả trạng thái</option>
+                            <!option value="Active" @(Model.Status == "Active" ? "selected" : "")>Active</!option>
+                            <!option value="Inactive" @(Model.Status == "Inactive" ? "selected" : "")>Inactive</!option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Môn học</th>
+                                <th>Nội dung câu hỏi</th>
+                                <th>Độ khó</th>
+                                <th>Trạng thái</th>
+                                <th style="width: 120px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Items != null && Model.Items.Any())
+                            {
+                                foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@item.SubjectCode</div>
+                                            <div class="small text-muted">@item.SubjectName</div>
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 450px;" title="@item.Content">@item.Content</div>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge @(item.Difficulty == "Hard" ? "bg-danger" : item.Difficulty == "Medium" ? "bg-warning text-dark" : "bg-success")">
+                                                @item.Difficulty
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge @(item.Status == "Active" ? "bg-success-subtle text-success border border-success-subtle" : "bg-secondary-subtle text-secondary border border-secondary-subtle")">
+                                                @item.Status
+                                            </span>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <button class="btn btn-sm btn-icon btn-light" onclick="openPreviewModal(@item.Id)"
+                                                    title="Xem trước câu hỏi">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+
+                                            @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                                            {
+                                                <button class="btn btn-sm btn-icon btn-light" onclick="openEditModal(@item.Id)"
+                                                        title="Chỉnh sửa"><i class="bi bi-pencil"></i></button>
+                                                <form method="post" asp-action="Delete" asp-route-id="@item.Id" class="d-inline"
+                                                      onsubmit="return confirm('Xóa câu hỏi này?')">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-icon btn-light text-danger" title="Xóa"><i
+                                                        class="bi bi-trash"></i></button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">Không có dữ liệu câu hỏi.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.HasPrevious || Model.HasNext)
                     {
-                        var label = ((char)('A' + i)).ToString();
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">@label</span>
-                            <input type="hidden" name="Options[@i].Label" value="@label" />
-                            <input type="hidden" name="Options[@i].SortOrder" value="@(i + 1)" />
-                            <input name="Options[@i].Content" class="form-control" placeholder="Nội dung đáp án @label" required maxlength="1000" />
-                            <span class="input-group-text"><input class="form-check-input mt-0" type="radio" name="CorrectOptionIndex" value="@i" checked="@(i == 0)" /></span>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="small text-muted">Trang @Model.Page</div>
+                            <div class="d-flex gap-2">
+                                <a href="@Url.Action("Index", new { keyword = Model.Keyword, subjectId = Model.SubjectId, difficulty = Model.Difficulty, status = Model.Status, page = Model.Page - 1 })"
+                                   class="btn btn-sm btn-outline-secondary @(!Model.HasPrevious ? "disabled" : "")">Trước</a>
+                                <a href="@Url.Action("Index", new { keyword = Model.Keyword, subjectId = Model.SubjectId, difficulty = Model.Difficulty, status = Model.Status, page = Model.Page + 1 })"
+                                   class="btn btn-sm btn-outline-secondary @(!Model.HasNext ? "disabled" : "")">Tiếp theo</a>
+                            </div>
                         </div>
                     }
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu</button></div>
-            </form>
-        </div>
-    </div>
 
-    <div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <form asp-action="Update" method="post" class="modal-content">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="Id" id="editQuestionId" />
-                <div class="modal-header"><h5 class="modal-title">Cập nhật câu hỏi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-4"><label class="form-label">Môn học</label><select name="SubjectId" id="editQuestionSubjectId" class="form-select" required><option value="">Chọn môn học</option>@foreach (var subject in Model.Subjects) { <option value="@subject.Value">@subject.Text</option> }</select></div>
-                        <div class="col-md-4"><label class="form-label">Độ khó</label><select name="Difficulty" id="editQuestionDifficulty" class="form-select"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
-                        <div class="col-md-4"><label class="form-label">Trạng thái</label><select name="Status" id="editQuestionStatus" class="form-select"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                        <div class="col-12"><label class="form-label">Nội dung</label><textarea name="Content" id="editQuestionContent" class="form-control" rows="3" required maxlength="2000"></textarea></div>
-                        <div class="col-12"><label class="form-label">Giải thích</label><textarea name="Explanation" id="editQuestionExplanation" class="form-control" rows="2" maxlength="2000"></textarea></div>
-                    </div>
-                    <hr />
-                    <h6>Đáp án</h6>
-                    @for (var i = 0; i < 4; i++)
-                    {
-                        var label = ((char)('A' + i)).ToString();
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">@label</span>
-                            <input type="hidden" name="Options[@i].Label" value="@label" />
-                            <input type="hidden" name="Options[@i].SortOrder" value="@(i + 1)" />
-                            <input name="Options[@i].Content" id="editOptionContent@i" class="form-control" placeholder="Nội dung đáp án @label" required maxlength="1000" />
-                            <span class="input-group-text"><input class="form-check-input mt-0" type="radio" name="CorrectOptionIndex" id="editCorrectOption@i" value="@i" /></span>
+                <div class="modal fade" id="createQuestionModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <form method="post" asp-action="Create">
+                                @Html.AntiForgeryToken()
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Tạo câu hỏi mới</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-medium">Môn học</label>
+                                        <select name="SubjectId" class="form-select" required>
+                                            <option value="">Chọn môn học</option>
+                                            @foreach (var subject in Model.Subjects)
+                                            {
+                                                <option value="@subject.Value">@subject.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-medium">Độ khó</label>
+                                        <select name="Difficulty" class="form-select">
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-medium">Trạng thái</label>
+                                        <select name="Status" class="form-select">
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Nội dung câu hỏi</label>
+                                        <textarea name="Content" class="form-control" rows="3" required
+                                                  placeholder="Nhập câu hỏi..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Đáp án lựa chọn (Chọn nút tròn cho đáp án đúng)</label>
+                                        <div class="d-flex flex-column gap-2">
+                                            @for (int i = 0; i < 4; i++)
+                                            {
+                                                // Ép kiểu số nguyên sang kiểu ký tự char (65 là 'A') rồi chuyển thành chuỗi
+                                                var label = ((char)(65 + i)).ToString();
+                                                <div class="input-group">
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="radio" name="CorrectOptionIndex"
+                                                               value="@i" @(i == 0 ? "checked" : "") required />
+                                                        <span class="ms-2 fw-semibold">@label</span>
+                                                    </div>
+                                                    <input type="hidden" name="Options[@i].Label" value="@label" />
+                                                    <input type="hidden" name="Options[@i].SortOrder" value="@(i + 1)" />
+                                                    <input name="Options[@i].Content" class="form-control"
+                                                           placeholder="Nội dung đáp án @label" required />
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Giải thích đáp án</label>
+                                        <textarea name="Explanation" class="form-control" rows="2"
+                                                  placeholder="Giải thích (không bắt buộc)..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-primary">Xác nhận tạo</button>
+                                </div>
+                            </form>
                         </div>
-                    }
+                    </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
-            </form>
-        </div>
-    </div>
-}
 
-<partial name="_DeleteConfirmationModal" />
+                <div class="modal fade" id="editQuestionModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <form method="post" asp-action="Update">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" id="editQuestionId" name="Id" />
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Chỉnh sửa câu hỏi</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-medium">Môn học</label>
+                                        <select id="editQuestionSubjectId" name="SubjectId" class="form-select" required>
+                                            <option value="">Chọn môn học</option>
+                                            @foreach (var subject in Model.Subjects)
+                                            {
+                                                <option value="@subject.Value">@subject.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-medium">Độ khó</label>
+                                        <select id="editQuestionDifficulty" name="Difficulty" class="form-select">
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-medium">Trạng thái</label>
+                                        <select id="editQuestionStatus" name="Status" class="form-select">
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Nội dung câu hỏi</label>
+                                        <textarea id="editQuestionContent" name="Content" class="form-control" rows="3" required
+                                                  placeholder="Nhập câu hỏi..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Đáp án lựa chọn (Chọn nút tròn cho đáp án đúng)</label>
+                                        <div class="d-flex flex-column gap-2">
+                                            @for (int i = 0; i < 4; i++)
+                                            {
+                                                // Ép kiểu số nguyên sang kiểu ký tự char (65 là 'A') rồi chuyển thành chuỗi
+                                                var label = ((char)(65 + i)).ToString();
+                                                <div class="input-group">
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="radio" name="CorrectOptionIndex"
+                                                               value="@i" @(i == 0 ? "checked" : "") required />
+                                                        <span class="ms-2 fw-semibold">@label</span>
+                                                    </div>
+                                                    <input type="hidden" name="Options[@i].Label" value="@label" />
+                                                    <input type="hidden" name="Options[@i].SortOrder" value="@(i + 1)" />
+                                                    <input name="Options[@i].Content" class="form-control"
+                                                           placeholder="Nội dung đáp án @label" required />
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-medium">Giải thích đáp án</label>
+                                        <textarea id="editQuestionExplanation" name="Explanation" class="form-control" rows="2"
+                                                  placeholder="Giải thích (không bắt buộc)..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-@section Scripts {
-    <script>
-        async function loadQuestionForEdit(id) {
-            const response = await fetch(`@Url.Action("GetForEdit", "Questions")?id=${id}`);
-            if (!response.ok) {
-                alert('Không thể tải thông tin câu hỏi để chỉnh sửa.');
-                return;
-            }
-            const question = await response.json();
-            document.getElementById('editQuestionId').value = question.id;
-            document.getElementById('editQuestionSubjectId').value = question.subjectId;
-            document.getElementById('editQuestionDifficulty').value = question.difficulty || 'Easy';
-            document.getElementById('editQuestionStatus').value = question.status || 'Active';
-            document.getElementById('editQuestionContent').value = question.content || '';
-            document.getElementById('editQuestionExplanation').value = question.explanation || '';
-            const optionsByLabel = new Map((question.options || []).map(option => [option.label, option]));
-            for (let i = 0; i < 4; i++) {
-                const label = String.fromCharCode(65 + i);
-                const option = optionsByLabel.get(label);
-                document.getElementById(`editOptionContent${i}`).value = option ? option.content : '';
-                document.getElementById(`editCorrectOption${i}`).checked = option ? Boolean(option.isCorrect) : i === 0;
-            }
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('editQuestionModal')).show();
-        }
-    </script>
-}
+                <div class="modal fade" id="previewQuestionModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-light">
+                                <h5 class="modal-title"><i class="bi bi-eye-fill text-primary"></i> Xem trước câu hỏi</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3 d-flex gap-2">
+                                    <span id="previewSubjectBadge"
+                                          class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"></span>
+                                    <span id="previewDifficultyBadge" class="badge"></span>
+                                </div>
+
+                                <p id="previewQuestionContent" class="fw-bold text-dark mb-3"
+                                   style="font-size: 1.1rem; white-space: pre-wrap;"></p>
+
+                                <div id="previewOptionsContainer" class="d-flex flex-column gap-2 mb-3">
+                                </div>
+
+                                <div id="previewExplanationSection" class="p-3 bg-light border rounded d-none">
+                                    <div class="fw-bold text-success small mb-1"><i class="bi bi-info-circle-fill"></i> Hướng dẫn / Giải
+                                        thích:</div>
+                                        <div id="previewExplanationText" class="text-muted small" style="white-space: pre-wrap;"></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @section Scripts {
+                        <script>
+                            // Hàm lấy dữ liệu câu hỏi gốc và điền thông tin vào Modal Sửa
+                            async function openEditModal(id) {
+                                const response = await fetch(`@Url.Action("GetForEdit", "Questions")?id=${id}`);
+                                if (!response.ok) {
+                                    alert('Không thể tải thông tin câu hỏi để chỉnh sửa.');
+                                    return;
+                                }
+                                const question = await response.json();
+                                document.getElementById('editQuestionId').value = question.id;
+                                document.getElementById('editQuestionSubjectId').value = question.subjectId;
+                                document.getElementById('editQuestionDifficulty').value = question.difficulty || 'Easy';
+                                document.getElementById('editQuestionStatus').value = question.status || 'Active';
+                                document.getElementById('editQuestionContent').value = question.content || '';
+                                document.getElementById('editQuestionExplanation').value = question.explanation || '';
+
+                                const optionsByLabel = new Map((question.options || []).map(option => [option.label, option]));
+                                for (let i = 0; i < 4; i++) {
+                                    const label = String.fromCharCode(65 + i);
+                                    const option = optionsByLabel.get(label);
+                                    document.getElementById(`editOptionContent${i}`).value = option ? option.content : '';
+                                    document.getElementById(`editCorrectOption${i}`).checked = option ? Boolean(option.isCorrect) : i === 0;
+                                }
+                                bootstrap.Modal.getOrCreateInstance(document.getElementById('editQuestionModal')).show();
+                            }
+
+                            // ================= HÀM XỬ LÝ PREVIEW CÂU HỎI (UC38) =================
+                            async function openPreviewModal(id) {
+                                const response = await fetch(`@Url.Action("GetForEdit", "Questions")?id=${id}`);
+                                if (!response.ok) {
+                                    alert('Không thể tải thông tin câu hỏi để xem trước.');
+                                    return;
+                                }
+                                const question = await response.json();
+
+                                // 1. Gán nội dung câu hỏi và thông tin chung
+                                document.getElementById('previewQuestionContent').innerText = question.content || '';
+                                document.getElementById('previewSubjectBadge').innerText = `${question.subjectCode} - ${question.subjectName}`;
+
+                                // 2. Định dạng badge Độ khó phù hợp màu sắc hệ thống
+                                const diffBadge = document.getElementById('previewDifficultyBadge');
+                                diffBadge.innerText = question.difficulty || 'Easy';
+                                diffBadge.className = 'badge ' + (question.difficulty === 'Hard' ? 'bg-danger' : question.difficulty === 'Medium' ? 'bg-warning text-dark' : 'bg-success');
+
+                                // 3. Tiến hành vẽ 4 đáp án và làm nổi bật đáp án đúng
+                                const container = document.getElementById('previewOptionsContainer');
+                                container.innerHTML = ''; // Làm sạch nội dung cũ
+
+                                if (question.options && question.options.length > 0) {
+                                    // Sắp xếp các lựa chọn theo đúng thứ tự hiển thị SortOrder
+                                    const sortedOptions = question.options.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                                    sortedOptions.forEach(opt => {
+                                        const row = document.createElement('div');
+
+                                        // Nếu là đáp án đúng: đổi viền xanh lá lá cây, tô màu nền nhạt (bg-success-subtle) và in đậm
+                                        if (opt.isCorrect) {
+                                            row.className = 'p-3 border border-success bg-success bg-opacity-10 rounded d-flex justify-content-between align-items-center fw-medium';
+                                            row.innerHTML = `
+                                                                            <div>
+                                                                                <span class="text-success fw-bold me-2">${opt.label}.</span>
+                                                                                <span class="text-dark">${opt.content}</span>
+                                                                            </div>
+                                                                            <span class="badge bg-success small"><i class="bi bi-check-lg"></i> Đáp án đúng</span>
+                                                                        `;
+                                        } else {
+                                            // Đáp án sai hiển thị viền xám mặc định nhẹ nhàng
+                                            row.className = 'p-3 border border-light-subtle rounded d-flex justify-content-between align-items-center';
+                                            row.innerHTML = `
+                                                                            <div>
+                                                                                <span class="text-secondary me-2">${opt.label}.</span>
+                                                                                <span class="text-secondary">${opt.content}</span>
+                                                                            </div>
+                                                                        `;
+                                        }
+                                        container.appendChild(row);
+                                    });
+                                }
+
+                                // 4. Kiểm tra và hiển thị giải thích (Nếu có dữ liệu giải thích)
+                                const explanationBlock = document.getElementById('previewExplanationSection');
+                                if (question.explanation && question.explanation.trim() !== '') {
+                                    document.getElementById('previewExplanationText').innerText = question.explanation;
+                                    explanationBlock.classList.remove('d-none');
+                                } else {
+                                    explanationBlock.classList.add('d-none');
+                                }
+
+                                // 5. Kích hoạt hiển thị modal Xem trước ra màn hình
+                                bootstrap.Modal.getOrCreateInstance(document.getElementById('previewQuestionModal')).show();
+                            }
+                        </script>
+                    }
