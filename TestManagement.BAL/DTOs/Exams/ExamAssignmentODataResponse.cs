@@ -1,0 +1,16 @@
+using System;
+
+namespace TestManagement.BAL.DTOs.ExamAssignments
+{
+    public class ExamAssignmentODataResponse
+    {
+        public int Id { get; set; }
+        public int ExamId { get; set; }
+        public string ExamTitle { get; set; } = string.Empty;
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public int AssignedBy { get; set; }
+        public string AssignerName { get; set; } = string.Empty;
+        public DateTime AssignedAt { get; set; }
+    }
+}

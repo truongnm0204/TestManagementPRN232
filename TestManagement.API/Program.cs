@@ -37,6 +37,9 @@ public class Program
         builder.Services.AddScoped<ITopicService, TopicService>();
         builder.Services.AddScoped<IClassService, ClassService>();
 
+        builder.Services.AddScoped<IExamAssignmentRepository, ExamAssignmentRepository>();
+        builder.Services.AddScoped<IExamAssignmentService, ExamAssignmentService>();
+
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
 
