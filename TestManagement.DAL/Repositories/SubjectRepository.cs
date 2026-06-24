@@ -40,4 +40,8 @@ public class SubjectRepository : Repository<Subject>, ISubjectRepository
             .AsNoTracking()
             .Where(x => !x.IsDeleted);
     }
+
+    
+
+   
 }

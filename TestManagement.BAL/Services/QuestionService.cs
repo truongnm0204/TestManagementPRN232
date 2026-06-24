@@ -3,6 +3,7 @@ using TestManagement.BAL.DTOs.Questions;
 using TestManagement.BAL.Services.Interfaces;
 using TestManagement.DAL.Models;
 using TestManagement.DAL.Repositories.Interfaces;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TestManagement.BAL.Services;
 
@@ -12,11 +13,15 @@ public class QuestionService : IQuestionService
     private static readonly string[] ValidStatuses = { "Active", "Inactive" };
     private readonly IQuestionRepository _questionRepository;
     private readonly ISubjectRepository _subjectRepository;
+    private readonly ITopicRepository _topicRepository;
+    private static readonly string[] ValidQuestionTypes = { "SingleChoice", "MultipleChoice", "TrueFalse" };
+    private static readonly string[] ValidSourceTypes = { "Manual", "Import" };
 
-    public QuestionService(IQuestionRepository questionRepository, ISubjectRepository subjectRepository)
+    public QuestionService(IQuestionRepository questionRepository, ISubjectRepository subjectRepository, ITopicRepository topicRepository)
     {
         _questionRepository = questionRepository;
         _subjectRepository = subjectRepository;
+        _topicRepository = topicRepository;
     }
 
     public IQueryable<QuestionODataResponse> GetODataQueryable()
@@ -25,6 +30,9 @@ public class QuestionService : IQuestionService
         {
             Id = question.Id,
             SubjectId = question.SubjectId,
+            TopicId = question.TopicId,
+            QuestionType = question.QuestionType,
+            SourceType = question.SourceType,
             SubjectCode = question.Subject == null ? string.Empty : question.Subject.Code,
             SubjectName = question.Subject == null ? string.Empty : question.Subject.Name,
             Content = question.Content,
@@ -44,6 +52,9 @@ public class QuestionService : IQuestionService
     {
         var validationError = await ValidateQuestionRequestAsync(
             request.SubjectId,
+            request.QuestionType,
+            request.SourceType,
+            request.TopicId,
             request.Difficulty,
             request.Status,
             request.Options);
@@ -86,6 +97,9 @@ public class QuestionService : IQuestionService
 
         var validationError = await ValidateQuestionRequestAsync(
             request.SubjectId,
+            request.QuestionType,
+            request.SourceType,
+            request.TopicId,
             request.Difficulty,
             request.Status,
             request.Options);
@@ -96,6 +110,9 @@ public class QuestionService : IQuestionService
         }
 
         question.SubjectId = request.SubjectId;
+        question.TopicId = request.TopicId;
+        question.QuestionType = request.QuestionType;
+        question.SourceType = request.SourceType;
         question.Content = request.Content;
         question.Explanation = request.Explanation;
         question.Difficulty = request.Difficulty;
@@ -129,10 +146,15 @@ public class QuestionService : IQuestionService
 
     private async Task<string?> ValidateQuestionRequestAsync(
         int subjectId,
+        string questionType,
+        string sourceType,
+        int? topicId,
         string difficulty,
         string status,
         List<QuestionOptionRequest> options)
     {
+
+        var correctOptionCount = options.Count(x => x.IsCorrect);
         if (!ValidDifficulties.Contains(difficulty))
         {
             return "Độ khó không hợp lệ.";
@@ -150,7 +172,47 @@ public class QuestionService : IQuestionService
             return "Môn học không tồn tại hoặc không active.";
         }
 
-        return ValidateOptions(options);
+        if (topicId.HasValue)
+        {
+            var topic = await _topicRepository.GetActiveByIdAsync(topicId.Value);
+            if (topic == null || topic.SubjectId != subjectId)
+            {
+                return "Chủ đề không tồn tại hoặc không thuộc môn học đã chọn.";
+            }
+        }
+
+        var optionValidationError = ValidateOptions(options);
+        if (optionValidationError != null)
+        {
+            return optionValidationError;
+        }
+        if (string.IsNullOrEmpty(questionType) || !ValidQuestionTypes.Contains(questionType))
+        {
+            return "Loại câu hỏi không hợp lệ.";
+        }
+        if(!ValidSourceTypes.Contains(sourceType))
+        {
+            return "Loại nguồn gốc câu hỏi không hợp lệ.";
+        }
+        if(questionType.Equals("SingleChoice", StringComparison.OrdinalIgnoreCase) && correctOptionCount != 1)
+        {
+            return "Câu hỏi Single Choice chỉ được phép có một đáp án đúng.";
+        }
+        if (questionType.Equals("MultipleChoice", StringComparison.OrdinalIgnoreCase) && correctOptionCount < 2)
+        {
+            return "Câu hỏi Multiple Choice phải có ít nhất hai đáp án đúng.";
+        }
+        if(questionType.Equals("TrueFalse", StringComparison.OrdinalIgnoreCase))
+        {
+            if(options.Count != 2)
+            {
+                return "Câu hỏi True/False phải có đúng 2 đáp án.";
+            }
+            if(options.Count(x=> x.IsCorrect) != 1) { 
+                return "Câu hỏi True/False phải có đúng 1 đáp án đúng.";
+            }
+        }
+        return null;
     }
 
     private static string? ValidateOptions(List<QuestionOptionRequest> options)
@@ -197,6 +259,9 @@ public class QuestionService : IQuestionService
         {
             Id = question.Id,
             SubjectId = question.SubjectId,
+            TopicId = question.TopicId,
+            QuestionType = question.QuestionType,
+            SourceType = question.SourceType,
             SubjectCode = question.Subject?.Code ?? string.Empty,
             SubjectName = question.Subject?.Name ?? string.Empty,
             Content = question.Content,

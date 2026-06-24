@@ -8,4 +8,5 @@ public interface ITopicRepository : IRepository<Topic>
     Task<bool> NameExistsInSubjectAsync(string name, int subjectId, int? excludeTopicId = null);
     IQueryable<Topic> GetQueryable();
     Task<IEnumerable<Topic>> GetBySubjectIdAsync(int subjectId);
+   
 }
