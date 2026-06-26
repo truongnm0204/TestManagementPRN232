@@ -55,6 +55,7 @@ public class Program
         builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<SubjectService>();
         builder.Services.AddScoped<QuestionService>();
+        builder.Services.AddScoped<ExamService>();
 
         var app = builder.Build();
 
