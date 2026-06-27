@@ -22,6 +22,16 @@ public class AuthService
         return _apiClient.PostEmptyAsync("api/auth/logout");
     }
 
+    public Task<ApiResult<CurrentUserViewModel>> UpdateProfileAsync(UpdateProfileViewModel model)
+    {
+        return _apiClient.PutAsync<UpdateProfileViewModel, CurrentUserViewModel>("api/auth/me", model);
+    }
+
+    public Task<ApiResult<CurrentUserViewModel>> GetCurrentUserAsync()
+    {
+        return _apiClient.GetAsync<CurrentUserViewModel>("api/auth/me");
+    }
+
     public Task<ApiResult<string>> ChangePasswordAsync(ChangePasswordViewModel model)
     {
         return _apiClient.PostAsync("api/auth/change-password", model);

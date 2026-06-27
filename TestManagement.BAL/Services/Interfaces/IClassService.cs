@@ -10,6 +10,7 @@ public interface IClassService
     Task<ServiceResult<ClassResponse>> CreateAsync(CreateClassRequest request);
     Task<ServiceResult> UpdateAsync(int id, UpdateClassRequest request);
     Task<ServiceResult> DeleteAsync(int id);
+    Task<ServiceResult> SetStatusAsync(int id, string status);
     Task<ServiceResult> AddStudentAsync(int classId, AddStudentRequest request);
     Task<ServiceResult> RemoveStudentAsync(int classId, int studentId);
 }

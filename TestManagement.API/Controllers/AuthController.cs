@@ -64,6 +64,24 @@ public class AuthController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpPut("me")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized("Không tìm thấy thông tin người dùng.");
+
+        var result = await _authService.UpdateProfileAsync(userId.Value, request);
+        if (!result.Success || result.Data == null)
+            return BadRequest(result.Error);
+
+        return Ok(result.Data);
+    }
+
     [HttpPost("change-password")]
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
