@@ -1,0 +1,112 @@
+@model TestManagement.Client.Models.Auth.CurrentUserViewModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    Layout = "_Layout";
+}
+
+<h4 class="mb-4 fw-semibold">Hồ sơ cá nhân</h4>
+
+<div class="row g-4">
+    <div class="col-md-4 col-lg-3">
+        <div class="page-card p-4 text-center">
+            <div class="profile-avatar mx-auto mb-3">
+                @Model.Initials
+            </div>
+            <h5 class="fw-semibold mb-1">@Model.FullName</h5>
+            <p class="text-muted small mb-2">@Model.Email</p>
+            <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill mb-3">@Model.Role</span>
+            <div>
+                @if (Model.IsActive)
+                {
+                    <span class="text-success"><span class="me-1">&#9679;</span>Đang hoạt động</span>
+                }
+                else
+                {
+                    <span class="text-secondary"><span class="me-1">&#9679;</span>Không hoạt động</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 col-lg-9">
+        <div class="page-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-semibold mb-0">Thông tin cá nhân</h6>
+                <a asp-action="EditProfile" class="btn btn-sm btn-outline-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                    </svg>
+                    Chỉnh sửa
+                </a>
+            </div>
+            <table class="table table-borderless mb-0 profile-info-table">
+                <tbody>
+                    <tr>
+                        <td class="text-muted" style="width:180px">Họ và tên</td>
+                        <td class="fw-medium">@Model.FullName</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Email</td>
+                        <td class="fw-medium">@Model.Email</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Số điện thoại</td>
+                        <td class="fw-medium">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "—" : Model.PhoneNumber)</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Vai trò</td>
+                        <td class="fw-medium">@Model.Role</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Ngày tham gia</td>
+                        <td class="fw-medium">@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="page-card p-4">
+            <h6 class="fw-semibold mb-3">Đổi mật khẩu</h6>
+            @if (TempData["ChangePasswordError"] != null)
+            {
+                <div class="alert alert-danger py-2">@TempData["ChangePasswordError"]</div>
+            }
+            <form asp-controller="Auth" asp-action="ChangePasswordFromProfile" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                    <input name="CurrentPassword" type="password" class="form-control" placeholder="••••••••" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu mới <span class="text-danger">*</span></label>
+                    <input name="NewPassword" type="password" class="form-control" placeholder="••••••••" required minlength="6" />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                    <input name="ConfirmNewPassword" type="password" class="form-control" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Cập nhật mật khẩu</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #c7d9f8;
+        color: #1a56db;
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .profile-info-table td {
+        padding: 0.5rem 0.75rem;
+        vertical-align: middle;
+    }
+</style>

@@ -62,6 +62,15 @@ public class ClassesController : ControllerBase
         return Ok("Xóa lớp học thành công.");
     }
 
+    [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> SetStatus(int id, [FromBody] string status)
+    {
+        var result = await _classService.SetStatusAsync(id, status);
+        if (!result.Success) return BadRequest(result.Error);
+        return Ok("Cập nhật trạng thái lớp học thành công.");
+    }
+
     [HttpPost("{id}/students")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> AddStudent(int id, [FromBody] AddStudentRequest request)

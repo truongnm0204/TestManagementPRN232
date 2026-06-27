@@ -84,6 +84,20 @@ public class AuthController : Controller
 
     [HttpGet]
     [Authorize]
+    public async Task<IActionResult> Profile()
+    {
+        var result = await _authService.GetCurrentUserAsync();
+        if (!result.Success || result.Data == null)
+        {
+            TempData["Error"] = result.Error ?? "Không thể tải thông tin hồ sơ.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        return View(result.Data);
+    }
+
+    [HttpGet]
+    [Authorize]
     public IActionResult ChangePassword()
     {
         return View(new ChangePasswordViewModel());
@@ -108,6 +122,71 @@ public class AuthController : Controller
 
         TempData["Success"] = "Đổi mật khẩu thành công.";
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> EditProfile()
+    {
+        var result = await _authService.GetCurrentUserAsync();
+        if (!result.Success || result.Data == null)
+        {
+            TempData["Error"] = result.Error ?? "Không thể tải thông tin hồ sơ.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var model = new UpdateProfileViewModel
+        {
+            FullName = result.Data.FullName,
+            PhoneNumber = result.Data.PhoneNumber
+        };
+        return View(model);
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditProfile(UpdateProfileViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var result = await _authService.UpdateProfileAsync(model);
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Cập nhật thất bại.");
+            return View(model);
+        }
+
+        TempData["Success"] = "Cập nhật hồ sơ thành công.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePasswordFromProfile(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var profileResult = await _authService.GetCurrentUserAsync();
+            TempData["ChangePasswordError"] = string.Join(" ", ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
+            return profileResult.Success && profileResult.Data != null
+                ? View("Profile", profileResult.Data)
+                : RedirectToAction(nameof(Profile));
+        }
+
+        var result = await _authService.ChangePasswordAsync(model);
+        if (!result.Success)
+        {
+            TempData["ChangePasswordError"] = result.Error ?? "Đổi mật khẩu không thành công.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        TempData["Success"] = "Đổi mật khẩu thành công.";
+        return RedirectToAction(nameof(Profile));
     }
 
     [HttpGet]
