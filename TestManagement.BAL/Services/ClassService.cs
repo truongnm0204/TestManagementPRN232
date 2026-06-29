@@ -108,8 +108,17 @@ public class ClassService : IClassService
         if (student == null || student.Role != "Student")
             return ServiceResult.Fail("Không tìm thấy sinh viên.");
 
-        if (await _classRepository.IsStudentInClassAsync(request.StudentId, classId))
-            return ServiceResult.Fail("Sinh viên đã có trong lớp học này.");
+        var existingStudentClass = await _classRepository.GetStudentClassAsync(request.StudentId, classId);
+        if (existingStudentClass != null)
+        {
+            if (existingStudentClass.Status == "Active")
+                return ServiceResult.Fail("Sinh viên đã có trong lớp học này.");
+
+            existingStudentClass.Status = "Active";
+            existingStudentClass.JoinedAt = DateTime.Now;
+            await _classRepository.SaveChangesAsync();
+            return ServiceResult.Ok();
+        }
 
         var studentClass = new StudentClass
         {
@@ -154,6 +163,17 @@ public class ClassService : IClassService
         Status = classEntity.Status,
         StudentCount = classEntity.StudentClasses?.Count(sc => sc.Status == "Active") ?? 0,
         CreatedAt = classEntity.CreatedAt,
-        UpdatedAt = classEntity.UpdatedAt
+        UpdatedAt = classEntity.UpdatedAt,
+        Students = classEntity.StudentClasses?
+            .OrderByDescending(sc => sc.JoinedAt)
+            .Select(sc => new ClassStudentResponse
+            {
+                StudentId = sc.StudentId,
+                FullName = sc.Student?.FullName ?? string.Empty,
+                Email = sc.Student?.Email ?? string.Empty,
+                Status = sc.Status,
+                JoinedAt = sc.JoinedAt
+            })
+            .ToList() ?? new List<ClassStudentResponse>()
     };
 }

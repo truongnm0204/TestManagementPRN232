@@ -20,6 +20,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Staff")]
     [EnableQuery(MaxTop = 100)]
     public IActionResult GetAll()
     {
@@ -27,6 +28,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetById(int id)
     {
         var question = await _questionService.GetByIdAsync(id);

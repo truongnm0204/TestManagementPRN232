@@ -1,0 +1,103 @@
+@model TestManagement.Client.Models.Classes.ClassDetailViewModel
+@{
+    ViewData["Title"] = "Chi tiết lớp học";
+    var activeStudents = Model.Class.Students.Where(x => x.Status == "Active").ToList();
+}
+
+<div class="page-card p-4 mb-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Quay lại</a>
+            <h1 class="h4 mb-1">@Model.Class.ClassCode - @Model.Class.ClassName</h1>
+            <p class="text-muted mb-0">@Model.Class.Description</p>
+        </div>
+        <div class="text-end">
+            <span class="badge @(Model.Class.Status == "Active" ? "text-bg-success" : Model.Class.Status == "Closed" ? "text-bg-dark" : "text-bg-secondary")">@Model.Class.Status</span>
+            <div class="text-muted mt-2">@activeStudents.Count học viên đang học</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="page-card p-4">
+            <h2 class="h5 mb-3">Thêm học viên</h2>
+            @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+            {
+                <form asp-action="AddStudent" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="classId" value="@Model.Class.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Học viên</label>
+                        <select name="studentId" class="form-select" required>
+                            <option value="">Chọn học viên</option>
+                            @foreach (var student in Model.StudentOptions)
+                            {
+                                if (!activeStudents.Any(x => x.StudentId.ToString() == student.Value))
+                                {
+                                    <option value="@student.Value">@student.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Thêm vào lớp</button>
+                </form>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Bạn không có quyền thêm học viên.</p>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="page-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Danh sách học viên</h2>
+                    <p class="text-muted mb-0">Quản lý học viên đang tham gia lớp.</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày vào lớp</th>
+                            <th class="text-end">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!activeStudents.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-4">Lớp chưa có học viên đang học.</td></tr>
+                        }
+                        @foreach (var student in activeStudents)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@student.FullName</td>
+                                <td>@student.Email</td>
+                                <td><span class="badge @(student.Status == "Active" ? "text-bg-success" : "text-bg-secondary")">@student.Status</span></td>
+                                <td>@student.JoinedAt.ToString("dd/MM/yyyy")</td>
+                                <td class="text-end">
+                                    @if ((User.IsInRole("Admin") || User.IsInRole("Staff")) && student.Status == "Active")
+                                    {
+                                        <form asp-action="RemoveStudent" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="classId" value="@Model.Class.Id" />
+                                            <input type="hidden" name="studentId" value="@student.StudentId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa khỏi lớp</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

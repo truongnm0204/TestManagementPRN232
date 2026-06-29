@@ -54,8 +54,9 @@ public class Program
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<SubjectService>();
+        builder.Services.AddScoped<TopicService>();
         builder.Services.AddScoped<QuestionService>();
-        builder.Services.AddScoped<ExamService>();
+        builder.Services.AddScoped<ClassService>();
 
         var app = builder.Build();
 

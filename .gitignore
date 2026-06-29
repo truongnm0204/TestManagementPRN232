@@ -4,6 +4,7 @@ obj/
 [Bb]in/
 [Oo]bj/
 
+
 # Visual Studio
 .vs/
 *.user
@@ -72,3 +73,5 @@ yarn-error.log*
 artifacts/build/Debug/net8.0
 *.dll
 *.json
+
+docs/

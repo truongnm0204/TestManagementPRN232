@@ -36,6 +36,16 @@ public class ExamsController : ControllerBase
         return Ok(exam);
     }
 
+    // GET api/exams/{id}/questions
+    [HttpGet("{id}/questions")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GetQuestions(int id)
+    {
+        var result = await _examService.GetQuestionsAsync(id);
+        if (!result.Success || result.Data == null) return BadRequest(result.Error);
+        return Ok(result.Data);
+    }
+
     // POST api/exams — chỉ Admin/Staff được tạo
     [HttpPost]
     [Authorize(Roles = "Admin,Staff")]
@@ -60,6 +70,30 @@ public class ExamsController : ControllerBase
         if (!result.Success) return BadRequest(result.Error);
 
         return Ok("Cập nhật đề thi thành công.");
+    }
+
+    // PUT api/exams/{id}/questions
+    [HttpPut("{id}/questions")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> UpdateQuestions(int id, [FromBody] UpdateExamQuestionsRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var result = await _examService.UpdateQuestionsAsync(id, request);
+        if (!result.Success || result.Data == null) return BadRequest(result.Error);
+
+        return Ok(result.Data);
+    }
+
+    // POST api/exams/{id}/publish
+    [HttpPost("{id}/publish")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> Publish(int id)
+    {
+        var result = await _examService.PublishAsync(id, GetCurrentUserId());
+        if (!result.Success || result.Data == null) return BadRequest(result.Error);
+
+        return Ok(result.Data);
     }
 
     // DELETE api/exams/{id} — soft delete, chỉ Admin

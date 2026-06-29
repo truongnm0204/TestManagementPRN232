@@ -1,0 +1,173 @@
+@model TestManagement.Client.Models.Topics.TopicListViewModel
+@{
+    ViewData["Title"] = "Chủ đề";
+}
+
+<div class="page-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">Quản lý chủ đề</h1>
+            <p class="text-muted mb-0">Tạo và quản lý chủ đề theo từng môn học.</p>
+        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Teacher"))
+        {
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTopicModal">Tạo chủ đề</button>
+        }
+    </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input name="keyword" value="@Model.Keyword" class="form-control" placeholder="Tìm theo tên chủ đề" />
+        </div>
+        <div class="col-md-3">
+            <select name="subjectId" class="form-select">
+                <option value="">Tất cả môn học</option>
+                @foreach (var subject in Model.Subjects)
+                {
+                    <option value="@subject.Value" selected="@(Model.SubjectId?.ToString() == subject.Value)">@subject.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Active" selected="@(Model.Status == "Active")">Active</option>
+                <option value="Inactive" selected="@(Model.Status == "Inactive")">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100">Tìm kiếm</button>
+        </div>
+        <div class="col-md-1">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Chủ đề</th>
+                    <th>Môn học</th>
+                    <th>Thứ tự</th>
+                    <th>Trạng thái</th>
+                    <th>Số câu hỏi</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Không có dữ liệu.</td></tr>
+                }
+                @foreach (var topic in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@topic.Name</div>
+                            <small class="text-muted">@topic.Description</small>
+                        </td>
+                        <td>@topic.SubjectName</td>
+                        <td>@topic.DisplayOrder</td>
+                        <td><span class="badge @(topic.Status == "Active" ? "text-bg-success" : "text-bg-secondary")">@topic.Status</span></td>
+                        <td>@topic.QuestionCount</td>
+                        <td>@topic.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">
+                            @if (User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Teacher"))
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTopicForEdit(@topic.Id)">Sửa</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Topics", new { id = topic.Id })" data-delete-name="@topic.Name">Xóa</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">Trang @Model.Page @(Model.Count.HasValue ? $"/ Tổng {Model.Count.Value} dòng" : string.Empty)</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-secondary @(Model.HasPrevious ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-subjectId="@Model.SubjectId" asp-route-status="@Model.Status" asp-route-page="@(Model.Page - 1)">Trước</a>
+            <a class="btn btn-outline-secondary @(Model.HasNext ? string.Empty : "disabled")" asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-subjectId="@Model.SubjectId" asp-route-status="@Model.Status" asp-route-page="@(Model.Page + 1)">Sau</a>
+        </div>
+    </div>
+</div>
+
+@if (User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Teacher"))
+{
+    <div class="modal fade" id="createTopicModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form asp-action="Create" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <div class="modal-header"><h5 class="modal-title">Tạo chủ đề</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Môn học</label>
+                        <select name="SubjectId" class="form-select" required>
+                            <option value="">Chọn môn học</option>
+                            @foreach (var subject in Model.Subjects)
+                            {
+                                <option value="@subject.Value">@subject.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Tên chủ đề</label><input name="Name" class="form-control" required maxlength="200" /></div>
+                    <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" class="form-control" rows="3" maxlength="1000"></textarea></div>
+                    <div class="mb-3"><label class="form-label">Thứ tự hiển thị</label><input name="DisplayOrder" type="number" class="form-control" value="0" /></div>
+                    <div class="mb-3"><label class="form-label">Trạng thái</label><select name="Status" class="form-select"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTopicModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form asp-action="Update" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editTopicId" />
+                <div class="modal-header"><h5 class="modal-title">Cập nhật chủ đề</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Môn học</label>
+                        <select name="SubjectId" id="editTopicSubjectId" class="form-select" required>
+                            @foreach (var subject in Model.Subjects)
+                            {
+                                <option value="@subject.Value">@subject.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Tên chủ đề</label><input name="Name" id="editTopicName" class="form-control" required maxlength="200" /></div>
+                    <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" id="editTopicDescription" class="form-control" rows="3" maxlength="1000"></textarea></div>
+                    <div class="mb-3"><label class="form-label">Thứ tự hiển thị</label><input name="DisplayOrder" id="editTopicDisplayOrder" type="number" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Trạng thái</label><select name="Status" id="editTopicStatus" class="form-select"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+<partial name="_DeleteConfirmationModal" />
+
+@section Scripts {
+    <script>
+        async function loadTopicForEdit(id) {
+            const response = await fetch(`@Url.Action("GetForEdit", "Topics")?id=${id}`);
+            if (!response.ok) {
+                alert('Không thể tải thông tin chủ đề để chỉnh sửa.');
+                return;
+            }
+            const topic = await response.json();
+            document.getElementById('editTopicId').value = topic.id;
+            document.getElementById('editTopicSubjectId').value = topic.subjectId;
+            document.getElementById('editTopicName').value = topic.name || '';
+            document.getElementById('editTopicDescription').value = topic.description || '';
+            document.getElementById('editTopicDisplayOrder').value = topic.displayOrder || 0;
+            document.getElementById('editTopicStatus').value = topic.status || 'Active';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editTopicModal')).show();
+        }
+    </script>
+}

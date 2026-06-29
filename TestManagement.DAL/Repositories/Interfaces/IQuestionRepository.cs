@@ -7,4 +7,6 @@ public interface IQuestionRepository : IRepository<Question>
     Task<Question?> GetDetailAsync(int id);
     IQueryable<Question> GetQueryable();
     Task ReplaceOptionsAsync(Question question, IEnumerable<QuestionOption> options);
+    Task<List<Question>> GetActiveWithOptionsByIdsAsync(IEnumerable<int> ids);
+
 }

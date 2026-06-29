@@ -10,4 +10,6 @@ public interface IQuestionService
     Task<ServiceResult<QuestionResponse>> CreateAsync(CreateQuestionRequest request, int? currentUserId);
     Task<ServiceResult> UpdateAsync(int id, UpdateQuestionRequest request);
     Task<ServiceResult> DeleteAsync(int id);
+
+
 }

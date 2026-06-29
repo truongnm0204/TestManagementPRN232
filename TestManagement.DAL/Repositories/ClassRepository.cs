@@ -36,4 +36,11 @@ public class ClassRepository : Repository<Class>, IClassRepository
             sc.ClassId == classId &&
             sc.Status == "Active");
     }
+
+    public async Task<StudentClass?> GetStudentClassAsync(int studentId, int classId)
+    {
+        return await Context.StudentClasses.FirstOrDefaultAsync(sc =>
+            sc.StudentId == studentId &&
+            sc.ClassId == classId);
+    }
 }
