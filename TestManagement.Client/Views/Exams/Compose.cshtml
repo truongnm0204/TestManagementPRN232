@@ -1,0 +1,128 @@
+@model TestManagement.Client.Models.Exams.ExamComposeViewModel
+@{
+    ViewData["Title"] = "Chọn câu hỏi cho đề thi";
+    var canEdit = Model.CanEdit && (User.IsInRole("Admin") || User.IsInRole("Staff"));
+}
+
+<div class="page-card p-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h4 mb-1">Chọn câu hỏi cho đề thi</h1>
+            <p class="text-muted mb-1">@Model.Exam.Title • @Model.Exam.SubjectCode - @Model.Exam.SubjectName</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge @(Model.Exam.IsPublished ? "text-bg-success" : "text-bg-secondary")">@Model.Exam.Status</span>
+                <span class="badge text-bg-light border">@Model.SelectedQuestions.QuestionCount câu</span>
+                <span class="badge text-bg-light border">Tổng điểm: @Model.SelectedQuestions.TotalPoints</span>
+                <span class="badge text-bg-light border">@Model.Exam.DurationMinutes phút</span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+            @if (canEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Exam.Id" class="btn btn-outline-primary">Sửa cấu hình</a>
+            }
+        </div>
+    </div>
+
+    @if (!canEdit)
+    {
+        <div class="alert alert-info">
+            Đề thi đã publish hoặc không còn ở trạng thái Draft, danh sách câu hỏi chỉ được xem và không thể chỉnh sửa.
+        </div>
+    }
+
+    <form asp-action="UpdateQuestions" asp-route-id="@Model.Exam.Id" method="post">
+        @Html.AntiForgeryToken()
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="border rounded-3 bg-white">
+                    <div class="p-3 border-bottom">
+                        <h2 class="h6 mb-1">Ngân hàng câu hỏi cùng môn học</h2>
+                        <p class="text-muted small mb-0">Tick câu hỏi muốn đưa vào đề, nhập điểm và thứ tự hiển thị.</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 56px;">Chọn</th>
+                                    <th>Câu hỏi</th>
+                                    <th style="width: 110px;">Độ khó</th>
+                                    <th style="width: 120px;">Điểm</th>
+                                    <th style="width: 120px;">Thứ tự</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.CandidateQuestions.Any())
+                                {
+                                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có câu hỏi Active cho môn học này.</td></tr>
+                                }
+                                @for (var i = 0; i < Model.CandidateQuestions.Count; i++)
+                                {
+                                    var question = Model.CandidateQuestions[i];
+                                    <tr>
+                                        <td>
+                                            <input type="hidden" name="Questions[@i].QuestionId" value="@question.QuestionId" />
+                                            <input class="form-check-input" type="checkbox" name="Questions[@i].IsSelected" value="true" checked="@question.IsSelected" disabled="@(!canEdit)" />
+                                            <input type="hidden" name="Questions[@i].IsSelected" value="false" />
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate-2" style="max-width: 520px;">@question.Content</div>
+                                            <small class="text-muted">#@question.QuestionId</small>
+                                        </td>
+                                        <td><span class="badge text-bg-info">@question.Difficulty</span></td>
+                                        <td><input name="Questions[@i].Points" value="@question.Points" type="number" min="0.1" max="100" step="0.1" class="form-control form-control-sm" disabled="@(!canEdit)" /></td>
+                                        <td><input name="Questions[@i].SortOrder" value="@question.SortOrder" type="number" min="1" class="form-control form-control-sm" disabled="@(!canEdit)" /></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="border rounded-3 bg-white mb-3">
+                    <div class="p-3 border-bottom">
+                        <h2 class="h6 mb-1">Câu hỏi đã chọn</h2>
+                        <p class="text-muted small mb-0">Danh sách hiện đang lưu trong đề thi.</p>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @if (!Model.SelectedQuestions.Items.Any())
+                        {
+                            <div class="list-group-item text-muted py-4 text-center">Chưa chọn câu hỏi.</div>
+                        }
+                        @foreach (var item in Model.SelectedQuestions.Items.OrderBy(x => x.SortOrder))
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between gap-3">
+                                    <div>
+                                        <div class="fw-semibold small">@(item.SortOrder). @item.Content</div>
+                                        <small class="text-muted">@item.QuestionType • @item.Difficulty</small>
+                                    </div>
+                                    <span class="badge text-bg-primary align-self-start">@item.Points điểm</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="border rounded-3 p-3 bg-white">
+                    <h2 class="h6 mb-2">Publish đề thi</h2>
+                    <p class="text-muted small">Publish sẽ tạo snapshot cố định và answer key để dùng cho luồng làm bài/chấm điểm. Sau publish không thể sửa cấu hình hoặc câu hỏi.</p>
+                    @if (canEdit)
+                    {
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Lưu danh sách câu hỏi</button>
+                            <button type="submit" class="btn btn-success" formaction="@Url.Action("Publish", "Exams", new { id = Model.Exam.Id })" formmethod="post" onclick="return confirm('Bạn chắc chắn muốn lưu danh sách hiện tại và publish đề thi này? Sau publish đề sẽ bị khóa chỉnh sửa.');">Lưu và publish đề thi</button>
+                        </div>
+                    }
+                    else if (Model.Exam.IsPublished)
+                    {
+                        <div class="alert alert-success small mb-0">Đề thi đã được publish@(Model.Exam.PublishedAt.HasValue ? $" lúc {Model.Exam.PublishedAt.Value:dd/MM/yyyy HH:mm}." : ".")</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

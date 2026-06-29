@@ -57,6 +57,10 @@
                     <a class="nav-link" asp-controller="Subjects" asp-action="Index">Môn học</a>
                     <a class="nav-link" asp-controller="Topics" asp-action="Index">Chủ đề</a>
                     <a class="nav-link" asp-controller="Questions" asp-action="Index">Câu hỏi</a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                    {
+                        <a class="nav-link" asp-controller="Exams" asp-action="Index">Đề thi</a>
+                    }
                     <a class="nav-link" asp-controller="Classes" asp-action="Index">Lớp học</a>
                 </nav>
             </aside>

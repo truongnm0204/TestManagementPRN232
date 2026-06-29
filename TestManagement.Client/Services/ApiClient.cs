@@ -85,6 +85,12 @@ public class ApiClient
         return await SendStringAsync(request);
     }
 
+    public async Task<ApiResult<TResponse>> PostEmptyAsync<TResponse>(string endpoint)
+    {
+        using var request = CreateRequest(HttpMethod.Post, endpoint);
+        return await SendAsync<TResponse>(request);
+    }
+
     public async Task<ApiResult<string>> PutAsync<TRequest>(string endpoint, TRequest data)
     {
         using var request = CreateJsonRequest(HttpMethod.Put, endpoint, data);

@@ -1,0 +1,105 @@
+@model TestManagement.Client.Models.Exams.ExamFormPageViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Cập nhật đề thi" : "Tạo đề thi";
+    var actionName = Model.IsEdit ? "Edit" : "Create";
+}
+
+<div class="page-card p-4">
+    <div class="mb-4">
+        <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+        <p class="text-muted mb-0">Thiết lập thông tin chung, thời gian làm bài và cấu hình hiển thị kết quả.</p>
+    </div>
+
+    <form asp-action="@actionName" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Form.Id" />
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="border rounded-3 p-4 bg-white h-100">
+                    <h2 class="h6 mb-3">Thông tin chung</h2>
+                    <div class="mb-3">
+                        <label asp-for="Form.Title" class="form-label">Tên đề thi</label>
+                        <input asp-for="Form.Title" class="form-control" placeholder="Ví dụ: Kiểm tra giữa kỳ ENG101" />
+                        <span asp-validation-for="Form.Title" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Form.SubjectId" class="form-label">Môn học</label>
+                        <select asp-for="Form.SubjectId" class="form-select">
+                            <option value="">Chọn môn học</option>
+                            @foreach (var subject in Model.Subjects)
+                            {
+                                <option value="@subject.Value">@subject.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.SubjectId" class="text-danger small"></span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Form.DurationMinutes" class="form-label">Thời gian làm bài</label>
+                            <div class="input-group">
+                                <input asp-for="Form.DurationMinutes" type="number" min="1" max="600" class="form-control" />
+                                <span class="input-group-text">phút</span>
+                            </div>
+                            <span asp-validation-for="Form.DurationMinutes" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.AttemptLimit" class="form-label">Số lần làm bài tối đa</label>
+                            <input asp-for="Form.AttemptLimit" type="number" min="1" max="10" class="form-control" />
+                            <span asp-validation-for="Form.AttemptLimit" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label asp-for="Form.AvailableFrom" class="form-label">Mở từ</label>
+                            <input asp-for="Form.AvailableFrom" type="datetime-local" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.AvailableTo" class="form-label">Đóng lúc</label>
+                            <input asp-for="Form.AvailableTo" type="datetime-local" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label asp-for="Form.Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="4" placeholder="Mục tiêu, phạm vi hoặc ghi chú cho đề thi"></textarea>
+                        <span asp-validation-for="Form.Description" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="border rounded-3 p-4 bg-white h-100">
+                    <h2 class="h6 mb-3">Cấu hình nâng cao</h2>
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="Form.ShuffleQuestions" class="form-check-input" type="checkbox" />
+                        <label asp-for="Form.ShuffleQuestions" class="form-check-label">Xáo trộn thứ tự câu hỏi</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="Form.ShuffleOptions" class="form-check-input" type="checkbox" />
+                        <label asp-for="Form.ShuffleOptions" class="form-check-label">Xáo trộn đáp án trong mỗi câu</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="Form.ShowResultsImmediately" class="form-check-input" type="checkbox" />
+                        <label asp-for="Form.ShowResultsImmediately" class="form-check-label">Hiển thị điểm ngay sau khi nộp</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="Form.ShowCorrectAnswers" class="form-check-input" type="checkbox" />
+                        <label asp-for="Form.ShowCorrectAnswers" class="form-check-label">Cho phép xem đáp án đúng sau khi chấm</label>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        Đáp án đúng chỉ dùng cho publish snapshot và chấm điểm. Màn học sinh sẽ không nhận AnswerKeyJson.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">@(Model.IsEdit ? "Cập nhật" : "Lưu và chọn câu hỏi")</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
