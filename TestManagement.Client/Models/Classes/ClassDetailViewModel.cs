@@ -11,4 +11,14 @@ public class ClassDetailViewModel
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<StudentInClassViewModel> Students { get; set; } = new();
+    public TeacherInClassViewModel? Teacher { get; set; }
+}
+
+public class TeacherInClassViewModel
+{
+    public int TeacherId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public DateTime AssignedAt { get; set; }
 }

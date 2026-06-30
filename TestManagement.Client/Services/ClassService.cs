@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using TestManagement.Client.Models.Classes;
 using TestManagement.Client.Models.Common;
 
@@ -14,18 +15,15 @@ public class ClassService
 
     public Task<ApiResult<ODataListResult<ClassItemViewModel>>> GetListAsync(string? keyword, string? status, int page, int pageSize)
     {
-        var filters = new List<string>();
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            filters.Add(ODataQueryBuilder.Or(
-                ODataQueryBuilder.Contains("ClassCode", keyword),
-                ODataQueryBuilder.Contains("ClassName", keyword)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(status))
-            filters.Add($"Status eq '{ODataQueryBuilder.EscapeValue(status)}'");
-
+        var filters = BuildFilters(keyword, status);
         var endpoint = ODataQueryBuilder.Build("api/classes", ODataQueryBuilder.And(filters.ToArray()), "ClassName", page, pageSize);
+        return _apiClient.GetODataListAsync<ClassItemViewModel>(endpoint);
+    }
+
+    public Task<ApiResult<ODataListResult<ClassItemViewModel>>> GetMyClassesAsync(string? keyword, string? status, int page, int pageSize)
+    {
+        var filters = BuildFilters(keyword, status);
+        var endpoint = ODataQueryBuilder.Build("api/classes/my", ODataQueryBuilder.And(filters.ToArray()), "ClassName", page, pageSize);
         return _apiClient.GetODataListAsync<ClassItemViewModel>(endpoint);
     }
 
@@ -57,5 +55,44 @@ public class ClassService
     public Task<ApiResult<string>> RemoveStudentAsync(int classId, int studentId)
     {
         return _apiClient.DeleteAsync($"api/classes/{classId}/students/{studentId}");
+    }
+
+    public Task<ApiResult<string>> LeaveClassAsync(int classId)
+    {
+        return _apiClient.PostAsync($"api/classes/{classId}/leave", new { });
+    }
+
+    public Task<ApiResult<string>> DissolveClassAsync(int classId)
+    {
+        return _apiClient.DeleteAsync($"api/classes/{classId}/dissolve");
+    }
+
+    public Task<ApiResult<string>> AddTeacherAsync(int classId, int teacherId)
+    {
+        return _apiClient.PostAsync($"api/classes/{classId}/teachers", new { TeacherId = teacherId });
+    }
+
+    public Task<ApiResult<string>> RemoveTeacherAsync(int classId, int teacherId)
+    {
+        return _apiClient.DeleteAsync($"api/classes/{classId}/teachers/{teacherId}");
+    }
+
+    public Task<ApiResult<ImportStudentsResultViewModel>> ImportStudentsAsync(int classId, IFormFile file)
+    {
+        return _apiClient.PostFileAsync<ImportStudentsResultViewModel>($"api/classes/{classId}/students/import", file);
+    }
+
+    private static List<string> BuildFilters(string? keyword, string? status)
+    {
+        var filters = new List<string>();
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            filters.Add(ODataQueryBuilder.Or(
+                ODataQueryBuilder.Contains("ClassCode", keyword),
+                ODataQueryBuilder.Contains("ClassName", keyword)));
+        }
+        if (!string.IsNullOrWhiteSpace(status))
+            filters.Add($"Status eq '{ODataQueryBuilder.EscapeValue(status)}'");
+        return filters;
     }
 }

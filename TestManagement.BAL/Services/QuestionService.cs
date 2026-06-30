@@ -38,7 +38,8 @@ public class QuestionService : IQuestionService
             Content = question.Content,
             Difficulty = question.Difficulty,
             Status = question.Status,
-            CreatedAt = question.CreatedAt
+            CreatedAt = question.CreatedAt,
+            CreatedByUserId = question.CreatedByUserId
         });
     }
 

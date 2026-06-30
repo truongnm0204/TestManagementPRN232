@@ -10,6 +10,7 @@ public class QuestionItemViewModel
     public string? Explanation { get; set; }
     public string Difficulty { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public int? CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public List<QuestionOptionFormViewModel> Options { get; set; } = new();

@@ -36,4 +36,15 @@ public class AuthService
     {
         return _apiClient.PostAsync("api/auth/change-password", model);
     }
+
+    public Task<ApiResult<LoginResponseViewModel>> RegisterAsync(RegisterViewModel model)
+    {
+        return _apiClient.PostAsync<RegisterViewModel, LoginResponseViewModel>("api/auth/register", model);
+    }
+
+    public Task<ApiResult<LoginResponseViewModel>> GoogleLoginAsync(string email, string fullName)
+    {
+        return _apiClient.PostAsync<object, LoginResponseViewModel>("api/auth/google-login",
+            new { Email = email, FullName = fullName });
+    }
 }

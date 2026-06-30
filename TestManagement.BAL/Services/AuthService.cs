@@ -54,6 +54,70 @@ public class AuthService : IAuthService
         });
     }
 
+    public async Task<ServiceResult<LoginResponse>> RegisterAsync(RegisterRequest request)
+    {
+        if (await _userRepository.EmailExistsAsync(request.Email))
+            return ServiceResult<LoginResponse>.Fail("Email đã được sử dụng.");
+
+        var user = new User
+        {
+            FullName = request.FullName,
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            PhoneNumber = request.PhoneNumber,
+            Role = "Student",
+            IsActive = true,
+            CreatedAt = DateTime.Now
+        };
+
+        await _userRepository.AddAsync(user);
+        await _userRepository.SaveChangesAsync();
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresMinutes);
+        return ServiceResult<LoginResponse>.Ok(new LoginResponse
+        {
+            AccessToken = GenerateToken(user, expiresAt),
+            ExpiresAt = expiresAt,
+            User = MapToCurrentUser(user)
+        });
+    }
+
+    public async Task<ServiceResult<LoginResponse>> GoogleLoginAsync(GoogleLoginRequest request)
+    {
+        var user = await _userRepository.GetByEmailAsync(request.Email);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+                Role = "Student",
+                IsActive = true,
+                CreatedAt = DateTime.Now
+            };
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
+        }
+        else if (!user.IsActive)
+        {
+            return ServiceResult<LoginResponse>.Fail("Tài khoản đã bị khóa.");
+        }
+
+        user.LastLoginAt = DateTime.Now;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresMinutes);
+        return ServiceResult<LoginResponse>.Ok(new LoginResponse
+        {
+            AccessToken = GenerateToken(user, expiresAt),
+            ExpiresAt = expiresAt,
+            User = MapToCurrentUser(user)
+        });
+    }
+
     public async Task<ServiceResult<CurrentUserResponse>> GetCurrentUserAsync(int userId)
     {
         var user = await _userRepository.GetActiveByIdAsync(userId);

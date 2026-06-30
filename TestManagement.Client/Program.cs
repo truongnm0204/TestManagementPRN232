@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using TestManagement.Client.Configuration;
 using TestManagement.Client.Services;
 
@@ -42,6 +43,20 @@ public class Program
 
                     return Task.CompletedTask;
                 };
+            })
+            .AddCookie("ExternalCookie", options =>
+            {
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
+            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
+                options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
+                options.CallbackPath = "/Auth/GoogleCallback";
+                options.SignInScheme = "ExternalCookie";
+                options.SaveTokens = false;
             });
 
         builder.Services.AddAuthorization();

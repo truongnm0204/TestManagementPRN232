@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Topic> Topics { get; set; }
     public DbSet<Class> Classes { get; set; }
     public DbSet<StudentClass> StudentClasses { get; set; }
+    public DbSet<TeacherClass> TeacherClasses { get; set; }
     public DbSet<Exam> Exams { get; set; }
     public DbSet<ExamAssignment> ExamAssignments { get; set; }
     public DbSet<ExamAttempt> ExamAttempts { get; set; }
@@ -79,6 +80,25 @@ public class ApplicationDbContext : DbContext
         builder.Entity<Class>(entity =>
         {
             entity.HasIndex(e => e.ClassCode).IsUnique();
+            entity.HasOne(e => e.Creator)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // === TeacherClass ===
+        builder.Entity<TeacherClass>(entity =>
+        {
+            entity.HasIndex(e => e.ClassId).IsUnique(); // mỗi lớp chỉ có 1 giáo viên
+            entity.HasIndex(e => e.TeacherId);
+            entity.HasOne(e => e.Teacher)
+                .WithMany()
+                .HasForeignKey(e => e.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Class)
+                .WithMany(c => c.TeacherClasses)
+                .HasForeignKey(e => e.ClassId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // === StudentClass ===

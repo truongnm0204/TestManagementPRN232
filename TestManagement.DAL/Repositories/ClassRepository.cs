@@ -14,6 +14,8 @@ public class ClassRepository : Repository<Class>, IClassRepository
         return await Context.Classes
             .Include(c => c.StudentClasses)
                 .ThenInclude(sc => sc.Student)
+            .Include(c => c.TeacherClasses)
+                .ThenInclude(tc => tc.Teacher)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -35,5 +37,18 @@ public class ClassRepository : Repository<Class>, IClassRepository
             sc.StudentId == studentId &&
             sc.ClassId == classId &&
             sc.Status == "Active");
+    }
+
+    public async Task<bool> IsTeacherInClassAsync(int teacherId, int classId)
+    {
+        return await Context.TeacherClasses.AnyAsync(tc =>
+            tc.TeacherId == teacherId && tc.ClassId == classId);
+    }
+
+    public IQueryable<Class> GetQueryableForTeacher(int teacherId)
+    {
+        return Context.Classes
+            .AsNoTracking()
+            .Where(c => c.TeacherClasses.Any(tc => tc.TeacherId == teacherId));
     }
 }

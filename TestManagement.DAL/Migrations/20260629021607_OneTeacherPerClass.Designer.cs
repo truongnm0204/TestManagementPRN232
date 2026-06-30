@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TestManagement.DAL.Data;
 
@@ -11,9 +12,11 @@ using TestManagement.DAL.Data;
 namespace TestManagement.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629021607_OneTeacherPerClass")]
+    partial class OneTeacherPerClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,9 +46,6 @@ namespace TestManagement.DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -62,8 +62,6 @@ namespace TestManagement.DAL.Migrations
 
                     b.HasIndex("ClassCode")
                         .IsUnique();
-
-                    b.HasIndex("CreatedBy");
 
                     b.ToTable("Classes");
                 });
@@ -794,16 +792,6 @@ namespace TestManagement.DAL.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserLoginLogs");
-                });
-
-            modelBuilder.Entity("TestManagement.DAL.Models.Class", b =>
-                {
-                    b.HasOne("TestManagement.DAL.Models.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("TestManagement.DAL.Models.Exam", b =>

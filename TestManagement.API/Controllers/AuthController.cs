@@ -36,6 +36,34 @@ public class AuthController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _authService.RegisterAsync(request);
+        if (!result.Success || result.Data == null)
+            return BadRequest(result.Error);
+
+        return Ok(result.Data);
+    }
+
+    [HttpPost("google-login")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _authService.GoogleLoginAsync(request);
+        if (!result.Success || result.Data == null)
+            return Unauthorized(result.Error);
+
+        return Ok(result.Data);
+    }
+
     [HttpPost("logout")]
     [Authorize]
     public IActionResult Logout()

@@ -4,14 +4,15 @@
 }
 
 <div class="d-flex align-items-center gap-2 mb-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">&#8592;</a>
+    <a asp-action="AdminIndex" class="btn btn-sm btn-outline-secondary">&#8592;</a>
     <h4 class="fw-semibold mb-0">Chi tiết lớp học</h4>
 </div>
 
 <div class="row g-4">
-    <!-- Thông tin lớp -->
+    <!-- Cột trái: thông tin lớp + đổi trạng thái -->
     <div class="col-lg-4">
-        <div class="page-card p-4">
+        <!-- Thông tin lớp -->
+        <div class="page-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h6 class="fw-semibold mb-0">Thông tin lớp học</h6>
                 <button class="btn btn-sm btn-outline-primary" onclick="loadClassForEdit(@Model.Id)">Sửa</button>
@@ -19,7 +20,7 @@
             <table class="table table-borderless mb-0 small">
                 <tbody>
                     <tr>
-                        <td class="text-muted ps-0" style="width:110px">Mã lớp</td>
+                        <td class="text-muted ps-0" style="width:130px">Mã lớp</td>
                         <td class="fw-medium">@Model.ClassCode</td>
                     </tr>
                     <tr>
@@ -48,19 +49,94 @@
                         <td>@Model.StudentCount</td>
                     </tr>
                     <tr>
-                        <td class="text-muted ps-0">Giáo viên</td>
-                        <td class="fw-medium">@(Model.Teacher?.FullName ?? "—")</td>
-                    </tr>
-                    <tr>
                         <td class="text-muted ps-0">Ngày tạo</td>
                         <td>@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
+        <!-- Đổi trạng thái -->
+        <div class="page-card p-4 mb-4">
+            <h6 class="fw-semibold mb-3">Thay đổi trạng thái</h6>
+            <div class="d-flex flex-column gap-2">
+                @if (Model.Status != "Active")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Active" />
+                        <button type="submit" class="btn btn-success w-100">Active</button>
+                    </form>
+                }
+                @if (Model.Status != "Inactive")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Inactive" />
+                        <button type="submit" class="btn btn-warning w-100">Inactive</button>
+                    </form>
+                }
+                @if (Model.Status != "Closed")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Closed" />
+                        <button type="submit" class="btn btn-danger w-100">Closed</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <!-- Giáo viên phụ trách -->
+        <div class="page-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-semibold mb-0">Giáo viên phụ trách</h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                    <i class="bi bi-person-fill-gear me-1"></i>@(Model.Teacher != null ? "Thay đổi" : "Phân công")
+                </button>
+            </div>
+
+            @if (Model.Teacher == null)
+            {
+                <div class="text-center py-3">
+                    <i class="bi bi-person-x text-muted" style="font-size:2rem"></i>
+                    <p class="text-muted small mt-2 mb-0">Chưa có giáo viên phụ trách.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:42px;height:42px">
+                        <i class="bi bi-person-video3 text-dark"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">@Model.Teacher.FullName</div>
+                        <div class="text-muted small">@Model.Teacher.Email</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Teacher.PhoneNumber))
+                        {
+                            <div class="text-muted small">@Model.Teacher.PhoneNumber</div>
+                        }
+                        <div class="text-muted small">Phân công: @Model.Teacher.AssignedAt.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <form asp-action="RemoveTeacher" method="post"
+                          onsubmit="return confirm('Hủy phân công giáo viên @Model.Teacher.FullName khỏi lớp?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="classId" value="@Model.Id" />
+                        <input type="hidden" name="teacherId" value="@Model.Teacher.TeacherId" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hủy phân công">
+                            <i class="bi bi-person-dash"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
     </div>
 
-    <!-- Danh sách sinh viên -->
+    <!-- Cột phải: danh sách sinh viên -->
     <div class="col-lg-8">
         <div class="page-card p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -101,7 +177,7 @@
                                     <td>@(string.IsNullOrWhiteSpace(student.PhoneNumber) ? "—" : student.PhoneNumber)</td>
                                     <td>@student.JoinedAt.ToString("dd/MM/yyyy")</td>
                                     <td class="text-end">
-                                        <form asp-action="RemoveStudent" method="post" class="d-inline"
+                                        <form asp-action="AdminRemoveStudent" method="post" class="d-inline"
                                               onsubmit="return confirm('Xóa sinh viên @student.FullName khỏi lớp?')">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="classId" value="@Model.Id" />
@@ -122,7 +198,7 @@
 <!-- Import Students Modal -->
 <div class="modal fade" id="importStudentsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form asp-action="ImportStudents" method="post" enctype="multipart/form-data" class="modal-content">
+        <form asp-action="AdminImportStudents" method="post" enctype="multipart/form-data" class="modal-content">
             @Html.AntiForgeryToken()
             <input type="hidden" name="classId" value="@Model.Id" />
             <div class="modal-header">
@@ -149,10 +225,37 @@
     </div>
 </div>
 
+<!-- Add Teacher Modal -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="AddTeacher" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="classId" value="@Model.Id" />
+            <div class="modal-header">
+                <h5 class="modal-title">@(Model.Teacher != null ? "Thay đổi giáo viên phụ trách" : "Phân công giáo viên")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tìm giáo viên</label>
+                    <input type="text" id="teacherSearchInput" class="form-control mb-2" placeholder="Nhập tên hoặc email..." autocomplete="off" />
+                    <select name="teacherId" id="teacherSelect" class="form-select" size="5" required>
+                        <option value="">— Nhập tên để tìm kiếm —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Phân công</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Add Student Modal -->
 <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form asp-action="AddStudent" method="post" class="modal-content">
+        <form asp-action="AdminAddStudent" method="post" class="modal-content">
             @Html.AntiForgeryToken()
             <input type="hidden" name="classId" value="@Model.Id" />
             <div class="modal-header">
@@ -179,22 +282,16 @@
 <!-- Edit Class Modal -->
 <div class="modal fade" id="editClassModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form asp-action="TeacherUpdate" method="post" class="modal-content">
+        <form asp-action="Update" method="post" class="modal-content">
             @Html.AntiForgeryToken()
             <input type="hidden" name="Id" id="editClassId" />
-            <div class="modal-header">
-                <h5 class="modal-title">Cập nhật lớp học</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header"><h5 class="modal-title">Cập nhật lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label">Mã lớp</label><input name="ClassCode" id="editClassCode" class="form-control" readonly /></div>
                 <div class="mb-3"><label class="form-label">Tên lớp <span class="text-danger">*</span></label><input name="ClassName" id="editClassName" class="form-control" required maxlength="200" /></div>
                 <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" id="editClassDescription" class="form-control" rows="2" maxlength="1000"></textarea></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-primary">Cập nhật</button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
         </form>
     </div>
 </div>
@@ -202,7 +299,7 @@
 @section Scripts {
     <script>
         async function loadClassForEdit(id) {
-            const response = await fetch(`@Url.Action("TeacherGetForEdit", "Classes")?id=${id}`);
+            const response = await fetch(`@Url.Action("GetForEdit", "Classes")?id=${id}`);
             if (!response.ok) { alert('Không thể tải thông tin lớp học.'); return; }
             const cls = await response.json();
             document.getElementById('editClassId').value = cls.id;
@@ -212,13 +309,28 @@
             bootstrap.Modal.getOrCreateInstance(document.getElementById('editClassModal')).show();
         }
 
-        let searchTimer;
-        document.getElementById('studentSearchInput')?.addEventListener('input', function () {
-            clearTimeout(searchTimer);
+        let teacherTimer;
+        document.getElementById('teacherSearchInput')?.addEventListener('input', function () {
+            clearTimeout(teacherTimer);
             const keyword = this.value.trim();
             if (keyword.length < 2) return;
-            searchTimer = setTimeout(async () => {
-                const response = await fetch(`@Url.Action("GetStudentOptions", "Classes")?keyword=${encodeURIComponent(keyword)}`);
+            teacherTimer = setTimeout(async () => {
+                const response = await fetch(`@Url.Action("GetTeacherOptions", "Classes")?keyword=${encodeURIComponent(keyword)}`);
+                const teachers = await response.json();
+                const select = document.getElementById('teacherSelect');
+                select.innerHTML = teachers.length === 0
+                    ? '<option value="">Không tìm thấy giáo viên</option>'
+                    : teachers.map(t => `<option value="${t.value}">${t.text}</option>`).join('');
+            }, 300);
+        });
+
+        let studentTimer;
+        document.getElementById('studentSearchInput')?.addEventListener('input', function () {
+            clearTimeout(studentTimer);
+            const keyword = this.value.trim();
+            if (keyword.length < 2) return;
+            studentTimer = setTimeout(async () => {
+                const response = await fetch(`@Url.Action("GetStudentOptionsAdmin", "Classes")?keyword=${encodeURIComponent(keyword)}`);
                 const students = await response.json();
                 const select = document.getElementById('studentSelect');
                 select.innerHTML = students.length === 0

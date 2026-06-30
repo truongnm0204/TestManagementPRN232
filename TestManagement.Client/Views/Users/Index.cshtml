@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h1 class="h4 mb-1">Quản lý người dùng</h1>
-            <p class="text-muted mb-0">Quản lý tài khoản Admin, Staff và Student.</p>
+            <p class="text-muted mb-0">Quản lý tài khoản Admin, Teacher và Student.</p>
         </div>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Tạo người dùng</button>
     </div>
@@ -20,7 +20,7 @@
             <select name="role" class="form-select">
                 <option value="">Tất cả vai trò</option>
                 <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
-                <option value="Staff" selected="@(Model.Role == "Staff")">Staff</option>
+                <option value="Teacher" selected="@(Model.Role == "Teacher")">Teacher</option>
                 <option value="Student" selected="@(Model.Role == "Student")">Student</option>
             </select>
         </div>
@@ -57,18 +57,39 @@
                     <tr>
                         <td>@user.FullName</td>
                         <td>@user.Email</td>
-                        <td><span class="badge text-bg-info">@user.Role</span></td>
-                        <td><span class="badge @(user.IsActive ? "text-bg-success" : "text-bg-secondary")">@(user.IsActive ? "Hoạt động" : "Bị khóa")</span></td>
+                        <td>
+                            @{
+                                var roleBadge = user.Role switch {
+                                    "Admin" => ("bg-danger text-white", "bi-shield-fill", "Admin"),
+                                    "Teacher" => ("bg-warning text-dark", "bi-person-video3", "Teacher"),
+                                    _ => ("bg-primary text-white", "bi-mortarboard-fill", "Student")
+                                };
+                            }
+                            <span class="badge @roleBadge.Item1"><i class="bi @roleBadge.Item2 me-1"></i>@roleBadge.Item3</span>
+                        </td>
+                        <td>
+                            @if (user.IsActive)
+                            {
+                                <span class="badge bg-success text-white"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger text-white"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+                            }
+                        </td>
                         <td>@(user.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")</td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadUserForEdit(@user.Id)">Sửa</button>
-                            <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@user.Id" />
-                                <input type="hidden" name="isActive" value="@(!user.IsActive)" />
-                                <button type="submit" class="btn btn-sm btn-outline-warning">@(user.IsActive ? "Khóa" : "Mở khóa")</button>
-                            </form>
-                            <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Users", new { id = user.Id })" data-delete-name="@user.FullName">Xóa</button>
+                            @if (user.Role != "Admin")
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadUserForEdit(@user.Id)">Sửa</button>
+                                <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <input type="hidden" name="isActive" value="@(!user.IsActive)" />
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">@(user.IsActive ? "Khóa" : "Mở khóa")</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Users", new { id = user.Id })" data-delete-name="@user.FullName">Xóa</button>
+                            }
                         </td>
                     </tr>
                 }
@@ -96,7 +117,7 @@
                     <div class="col-md-6"><label class="form-label">Email</label><input name="Email" type="email" class="form-control" required maxlength="100" /></div>
                     <div class="col-md-6"><label class="form-label">Mật khẩu</label><input name="Password" type="password" class="form-control" required minlength="6" /></div>
                     <div class="col-md-6"><label class="form-label">Số điện thoại</label><input name="PhoneNumber" class="form-control" maxlength="20" /></div>
-                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" class="form-select"><option value="Admin">Admin</option><option value="Staff">Staff</option><option value="Student" selected>Student</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" class="form-select"><option value="Admin">Admin</option><option value="Teacher">Teacher</option><option value="Student" selected>Student</option></select></div>
                     <div class="col-md-6"><label class="form-label">Avatar URL</label><input name="AvatarUrl" class="form-control" maxlength="255" /></div>
                     <div class="col-12"><div class="form-check"><input name="IsActive" value="true" class="form-check-input" type="checkbox" checked /><label class="form-check-label">Đang hoạt động</label></div></div>
                 </div>
@@ -117,7 +138,7 @@
                     <div class="col-md-6"><label class="form-label">Họ tên</label><input name="FullName" id="editUserFullName" class="form-control" required maxlength="100" /></div>
                     <div class="col-md-6"><label class="form-label">Email</label><input id="editUserEmail" class="form-control" disabled /></div>
                     <div class="col-md-6"><label class="form-label">Số điện thoại</label><input name="PhoneNumber" id="editUserPhoneNumber" class="form-control" maxlength="20" /></div>
-                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" id="editUserRole" class="form-select"><option value="Admin">Admin</option><option value="Staff">Staff</option><option value="Student">Student</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Vai trò</label><select name="Role" id="editUserRole" class="form-select"><option value="Admin">Admin</option><option value="Teacher">Teacher</option><option value="Student">Student</option></select></div>
                     <div class="col-md-6"><label class="form-label">Avatar URL</label><input name="AvatarUrl" id="editUserAvatarUrl" class="form-control" maxlength="255" /></div>
                     <div class="col-12"><div class="form-check"><input name="IsActive" value="true" id="editUserIsActive" class="form-check-input" type="checkbox" /><label class="form-check-label">Đang hoạt động</label></div></div>
                 </div>

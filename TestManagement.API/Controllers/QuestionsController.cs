@@ -40,7 +40,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create([FromBody] CreateQuestionRequest request)
     {
         if (!ModelState.IsValid)
@@ -59,7 +59,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateQuestionRequest request)
     {
         if (!ModelState.IsValid)
@@ -78,7 +78,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _questionService.DeleteAsync(id);

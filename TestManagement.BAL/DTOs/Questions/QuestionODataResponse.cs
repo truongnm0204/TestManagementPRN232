@@ -13,4 +13,5 @@ public class QuestionODataResponse
     public string Difficulty { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public int? CreatedByUserId { get; set; }
 }

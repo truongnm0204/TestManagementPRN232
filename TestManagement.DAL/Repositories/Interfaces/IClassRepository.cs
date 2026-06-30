@@ -8,4 +8,6 @@ public interface IClassRepository : IRepository<Class>
     Task<bool> ClassCodeExistsAsync(string classCode, int? excludeClassId = null);
     IQueryable<Class> GetQueryable();
     Task<bool> IsStudentInClassAsync(int studentId, int classId);
+    Task<bool> IsTeacherInClassAsync(int teacherId, int classId);
+    IQueryable<Class> GetQueryableForTeacher(int teacherId);
 }
