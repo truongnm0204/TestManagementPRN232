@@ -66,6 +66,22 @@ public class AuthService : IAuthService
         return ServiceResult<CurrentUserResponse>.Ok(MapToCurrentUser(user));
     }
 
+    public async Task<ServiceResult<CurrentUserResponse>> UpdateProfileAsync(int userId, UpdateProfileRequest request)
+    {
+        var user = await _userRepository.GetActiveByIdAsync(userId);
+        if (user == null)
+            return ServiceResult<CurrentUserResponse>.Fail("Không tìm thấy người dùng.");
+
+        user.FullName = request.FullName;
+        user.PhoneNumber = request.PhoneNumber;
+        user.UpdatedAt = DateTime.Now;
+
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        return ServiceResult<CurrentUserResponse>.Ok(MapToCurrentUser(user));
+    }
+
     public async Task<ServiceResult> ChangePasswordAsync(int userId, ChangePasswordRequest request)
     {
         if (request.NewPassword != request.ConfirmNewPassword)
@@ -125,7 +141,10 @@ public class AuthService : IAuthService
             Id = user.Id,
             FullName = user.FullName,
             Email = user.Email,
-            Role = user.Role
+            PhoneNumber = user.PhoneNumber,
+            Role = user.Role,
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
         };
     }
 }

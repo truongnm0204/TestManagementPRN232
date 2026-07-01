@@ -39,6 +39,7 @@
                                 @User.Identity.Name (@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-controller="Auth" asp-action="Profile">Hồ sơ cá nhân</a></li>
                                 <li><a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword">Đổi mật khẩu</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>
@@ -69,6 +70,7 @@
                     {
                         <a class="nav-link" asp-controller="Users" asp-action="Index">Người dùng</a>
                     }
+                    <a class="nav-link" asp-controller="Classes" asp-action="Index">Lớp học</a>
                     <a class="nav-link" asp-controller="Subjects" asp-action="Index">Môn học</a>
                     <a class="nav-link" asp-controller="Topics" asp-action="Index">Chủ đề</a>
                     <a class="nav-link" asp-controller="Questions" asp-action="Index">Câu hỏi</a>

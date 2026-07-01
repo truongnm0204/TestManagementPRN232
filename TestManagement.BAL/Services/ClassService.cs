@@ -98,6 +98,23 @@ public class ClassService : IClassService
         return ServiceResult.Ok();
     }
 
+    public async Task<ServiceResult> SetStatusAsync(int id, string status)
+    {
+        if (!IsValidStatus(status))
+            return ServiceResult.Fail("Trạng thái không hợp lệ. Các giá trị hợp lệ: Active, Inactive, Closed.");
+
+        var classEntity = await _classRepository.GetByIdWithStudentsAsync(id);
+        if (classEntity == null)
+            return ServiceResult.Fail("Không tìm thấy lớp học.");
+
+        classEntity.Status = status;
+        classEntity.UpdatedAt = DateTime.Now;
+        _classRepository.Update(classEntity);
+        await _classRepository.SaveChangesAsync();
+
+        return ServiceResult.Ok();
+    }
+
     public async Task<ServiceResult> AddStudentAsync(int classId, AddStudentRequest request)
     {
         var classEntity = await _classRepository.GetByIdWithStudentsAsync(classId);
@@ -165,15 +182,14 @@ public class ClassService : IClassService
         CreatedAt = classEntity.CreatedAt,
         UpdatedAt = classEntity.UpdatedAt,
         Students = classEntity.StudentClasses?
-            .OrderByDescending(sc => sc.JoinedAt)
-            .Select(sc => new ClassStudentResponse
+            .Where(sc => sc.Status == "Active" && sc.Student != null)
+            .Select(sc => new StudentInClassResponse
             {
                 StudentId = sc.StudentId,
-                FullName = sc.Student?.FullName ?? string.Empty,
-                Email = sc.Student?.Email ?? string.Empty,
-                Status = sc.Status,
+                FullName = sc.Student!.FullName,
+                Email = sc.Student.Email,
+                PhoneNumber = sc.Student.PhoneNumber,
                 JoinedAt = sc.JoinedAt
-            })
-            .ToList() ?? new List<ClassStudentResponse>()
+            }).ToList() ?? new()
     };
 }
