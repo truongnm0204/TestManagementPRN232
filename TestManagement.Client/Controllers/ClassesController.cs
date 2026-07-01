@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TestManagement.Client.Models.Classes;
-using TestManagement.Client.Models.Common;
 using TestManagement.Client.Services;
 
 namespace TestManagement.Client.Controllers;
@@ -26,9 +25,7 @@ public class ClassesController : Controller
     {
         var result = await _classService.GetMyClassesAsync(keyword, status, page, pageSize);
         if (!result.Success)
-        {
             TempData["Error"] = result.Error;
-        }
 
         return View(new ClassListViewModel
         {
@@ -201,6 +198,7 @@ public class ClassesController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetForEdit(int id)
     {
         var result = await _classService.GetByIdAsync(id);
@@ -208,7 +206,7 @@ public class ClassesController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ClassFormViewModel model)
     {
@@ -223,7 +221,7 @@ public class ClassesController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(ClassFormViewModel model)
     {
@@ -240,7 +238,7 @@ public class ClassesController : Controller
     [HttpPost]
     [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> SetStatus(int id, string status)
     {
         var result = await _classService.SetStatusAsync(id, status);
         TempData[result.Success ? "Success" : "Error"] = result.Success
@@ -275,7 +273,7 @@ public class ClassesController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdminAddStudent(int classId, int studentId)
     {
@@ -285,7 +283,7 @@ public class ClassesController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdminRemoveStudent(int classId, int studentId)
     {

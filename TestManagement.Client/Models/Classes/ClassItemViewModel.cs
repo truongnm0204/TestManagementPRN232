@@ -10,6 +10,4 @@ public class ClassItemViewModel
     public int StudentCount { get; set; }
     public int? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public List<ClassStudentViewModel> Students { get; set; } = new();
 }

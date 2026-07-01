@@ -257,4 +257,22 @@ public class AuthController : Controller
         var token = HttpContext.Session.GetString(SessionKeys.AccessToken);
         return Json(new { token });
     }
+
+    private async Task SignInFromApiResponse(LoginResponseViewModel data)
+    {
+        var user = data.User;
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role)
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = false, ExpiresUtc = data.ExpiresAt });
+        HttpContext.Session.SetString(SessionKeys.AccessToken, data.AccessToken);
+    }
 }
