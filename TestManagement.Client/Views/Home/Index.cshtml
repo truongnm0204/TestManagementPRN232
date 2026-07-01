@@ -11,15 +11,82 @@
         <div class="row g-3">
             @if (User.IsInRole("Admin"))
             {
-                <div class="col-md-4">
-                    <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý người dùng</a>
+                <div class="col-md-3">
+                    <a asp-controller="Users" asp-action="Index" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-primary bg-opacity-10 text-primary rounded-3 p-3">
+                            <i class="bi bi-people fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Người dùng</div>
+                            <small class="text-muted">Quản lý tài khoản</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a asp-controller="Classes" asp-action="AdminIndex" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-success bg-opacity-10 text-success rounded-3 p-3">
+                            <i class="bi bi-building fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Lớp học</div>
+                            <small class="text-muted">Quản lý lớp học</small>
+                        </div>
+                    </a>
                 </div>
             }
-            <div class="col-md-4">
-                <a asp-controller="Subjects" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý môn học</a>
-            </div>
-            <div class="col-md-4">
-                <a asp-controller="Questions" asp-action="Index" class="btn btn-outline-primary w-100 py-3">Quản lý câu hỏi</a>
+            @if (User.IsInRole("Teacher"))
+            {
+                <div class="col-md-3">
+                    <a asp-controller="Classes" asp-action="Index" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-success bg-opacity-10 text-success rounded-3 p-3">
+                            <i class="bi bi-building fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Lớp học</div>
+                            <small class="text-muted">Lớp học của tôi</small>
+                        </div>
+                    </a>
+                </div>
+            }
+            @if (!User.IsInRole("Teacher"))
+            {
+                <div class="col-md-3">
+                    <a asp-controller="Subjects" asp-action="Index" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-warning bg-opacity-10 text-warning rounded-3 p-3">
+                            <i class="bi bi-book fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Môn học</div>
+                            <small class="text-muted">Quản lý môn học</small>
+                        </div>
+                    </a>
+                </div>
+            }
+            <div class="col-md-3">
+                @if (User.IsInRole("Teacher"))
+                {
+                    <a asp-controller="Questions" asp-action="Packages" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                            <i class="bi bi-question-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Câu hỏi</div>
+                            <small class="text-muted">Câu hỏi của tôi</small>
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Questions" asp-action="Index" class="dashboard-card text-decoration-none d-flex align-items-center gap-3 p-3 border rounded-3 bg-white h-100">
+                        <div class="dashboard-icon bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                            <i class="bi bi-question-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Câu hỏi</div>
+                            <small class="text-muted">Quản lý câu hỏi</small>
+                        </div>
+                    </a>
+                }
             </div>
         </div>
     }

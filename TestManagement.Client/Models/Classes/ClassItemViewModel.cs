@@ -8,6 +8,7 @@ public class ClassItemViewModel
     public string? Description { get; set; }
     public string Status { get; set; } = string.Empty;
     public int StudentCount { get; set; }
+    public int? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public List<ClassStudentViewModel> Students { get; set; } = new();

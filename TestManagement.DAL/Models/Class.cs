@@ -20,11 +20,14 @@ namespace TestManagement.DAL.Models
 
         [MaxLength(20)]
         public string Status { get; set; } = "Active";
+        public int? CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
+        public User? Creator { get; set; }
         public ICollection<StudentClass> StudentClasses { get; set; } = new List<StudentClass>();
+        public ICollection<TeacherClass> TeacherClasses { get; set; } = new List<TeacherClass>();
         public ICollection<ExamAssignment> ExamAssignments { get; set; } = new List<ExamAssignment>();
     }
 }

@@ -1,0 +1,156 @@
+@model TestManagement.Client.Models.Classes.ClassListViewModel
+@{
+    ViewData["Title"] = "Quản lý lớp học";
+}
+
+<div class="page-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">Quản lý lớp học</h1>
+            <p class="text-muted mb-0">Tạo lớp học, phân công giáo viên và quản lý sinh viên.</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClassModal">Tạo lớp học</button>
+    </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-5">
+            <input name="keyword" value="@Model.Keyword" class="form-control" placeholder="Tìm theo mã hoặc tên lớp" />
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Active" selected="@(Model.Status == "Active")">Active</option>
+                <option value="Inactive" selected="@(Model.Status == "Inactive")">Inactive</option>
+                <option value="Closed" selected="@(Model.Status == "Closed")">Closed</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100">Tìm kiếm</button>
+        </div>
+        <div class="col-md-2">
+            <a asp-action="AdminIndex" class="btn btn-outline-secondary w-100">Làm mới</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã lớp</th>
+                    <th>Tên lớp</th>
+                    <th>Trạng thái</th>
+                    <th>Số SV</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Không có dữ liệu.</td></tr>
+                }
+                @foreach (var cls in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-semibold">@cls.ClassCode</td>
+                        <td>
+                            <div>@cls.ClassName</div>
+                            @if (!string.IsNullOrWhiteSpace(cls.Description))
+                            {
+                                <small class="text-muted">@cls.Description</small>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var clsBadge = cls.Status switch {
+                                    "Active" => ("bg-success text-white", "bi-check-circle-fill", "Active"),
+                                    "Closed" => ("bg-danger text-white", "bi-x-circle-fill", "Closed"),
+                                    _ => ("bg-secondary text-white", "bi-pause-circle-fill", "Inactive")
+                                };
+                            }
+                            <span class="badge @clsBadge.Item1"><i class="bi @clsBadge.Item2 me-1"></i>@clsBadge.Item3</span>
+                        </td>
+                        <td>@cls.StudentCount</td>
+                        <td>@cls.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">
+                            <a asp-action="AdminDetail" asp-route-id="@cls.Id" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadClassForEdit(@cls.Id)">Sửa</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">Trang @Model.Page @(Model.Count.HasValue ? $"/ Tổng {Model.Count.Value} dòng" : string.Empty)</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-secondary @(Model.HasPrevious ? string.Empty : "disabled")" asp-action="AdminIndex" asp-route-keyword="@Model.Keyword" asp-route-status="@Model.Status" asp-route-page="@(Model.Page - 1)">Trước</a>
+            <a class="btn btn-outline-secondary @(Model.HasNext ? string.Empty : "disabled")" asp-action="AdminIndex" asp-route-keyword="@Model.Keyword" asp-route-status="@Model.Status" asp-route-page="@(Model.Page + 1)">Sau</a>
+        </div>
+    </div>
+</div>
+
+<!-- Create Class Modal -->
+<div class="modal fade" id="createClassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="Create" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header"><h5 class="modal-title">Tạo lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Mã lớp <span class="text-danger">*</span></label><input name="ClassCode" class="form-control" required maxlength="50" /></div>
+                <div class="mb-3"><label class="form-label">Tên lớp <span class="text-danger">*</span></label><input name="ClassName" class="form-control" required maxlength="200" /></div>
+                <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" class="form-control" rows="2" maxlength="1000"></textarea></div>
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="Status" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div class="modal fade" id="editClassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="Update" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editClassId" />
+            <div class="modal-header"><h5 class="modal-title">Cập nhật lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Mã lớp</label><input name="ClassCode" id="editClassCode" class="form-control" readonly /></div>
+                <div class="mb-3"><label class="form-label">Tên lớp <span class="text-danger">*</span></label><input name="ClassName" id="editClassName" class="form-control" required maxlength="200" /></div>
+                <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" id="editClassDescription" class="form-control" rows="2" maxlength="1000"></textarea></div>
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="Status" id="editClassStatus" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadClassForEdit(id) {
+            const response = await fetch(`@Url.Action("GetForEdit", "Classes")?id=${id}`);
+            if (!response.ok) { alert('Không thể tải thông tin lớp học.'); return; }
+            const cls = await response.json();
+            document.getElementById('editClassId').value = cls.id;
+            document.getElementById('editClassCode').value = cls.classCode || '';
+            document.getElementById('editClassName').value = cls.className || '';
+            document.getElementById('editClassDescription').value = cls.description || '';
+            document.getElementById('editClassStatus').value = cls.status || 'Active';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editClassModal')).show();
+        }
+    </script>
+}

@@ -8,6 +8,7 @@ public class QuestionListViewModel
     public List<SelectOptionViewModel> Subjects { get; set; } = new();
     public string? Keyword { get; set; }
     public int? SubjectId { get; set; }
+    public string? SubjectName { get; set; }
     public string? Difficulty { get; set; }
     public string? Status { get; set; }
     public int Page { get; set; } = 1;

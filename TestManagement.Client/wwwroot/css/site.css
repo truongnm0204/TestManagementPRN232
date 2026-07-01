@@ -51,6 +51,12 @@ body {
   background: #eaf2ff;
 }
 
+.app-sidebar .nav-link.active {
+  color: #0d6efd;
+  background: #dbeafe;
+  font-weight: 600;
+}
+
 .app-content {
   flex: 1;
   min-width: 0;
@@ -70,6 +76,21 @@ body {
 .table td,
 .table th {
   vertical-align: middle;
+}
+
+.dashboard-card {
+  color: #334155;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+  color: #0d6efd;
+}
+
+.dashboard-icon {
+  flex-shrink: 0;
 }
 
 .text-truncate-2 {

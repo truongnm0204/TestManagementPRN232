@@ -8,7 +8,7 @@ namespace TestManagement.BAL.Services;
 
 public class UserService : IUserService
 {
-    private static readonly string[] ValidRoles = { "Admin", "Staff", "Student" };
+    private static readonly string[] ValidRoles = { "Admin", "Teacher", "Student" };
     private readonly IUserRepository _userRepository;
 
     public UserService(IUserRepository userRepository)

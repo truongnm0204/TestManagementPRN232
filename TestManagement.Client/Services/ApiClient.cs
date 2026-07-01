@@ -103,6 +103,19 @@ public class ApiClient
         return await SendStringAsync(request);
     }
 
+    public async Task<ApiResult<T>> PostFileAsync<T>(string endpoint, IFormFile file, string fieldName = "file")
+    {
+        using var form = new MultipartFormDataContent();
+        using var stream = file.OpenReadStream();
+        var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+        form.Add(fileContent, fieldName, file.FileName);
+
+        using var request = CreateRequest(HttpMethod.Post, endpoint);
+        request.Content = form;
+        return await SendAsync<T>(request);
+    }
+
     public async Task<ApiResult<string>> DeleteAsync(string endpoint)
     {
         using var request = CreateRequest(HttpMethod.Delete, endpoint);

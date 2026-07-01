@@ -1,0 +1,342 @@
+@model TestManagement.Client.Models.Classes.ClassDetailViewModel
+@{
+    ViewData["Title"] = $"Chi tiết lớp — {Model.ClassCode}";
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="AdminIndex" class="btn btn-sm btn-outline-secondary">&#8592;</a>
+    <h4 class="fw-semibold mb-0">Chi tiết lớp học</h4>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: thông tin lớp + đổi trạng thái -->
+    <div class="col-lg-4">
+        <!-- Thông tin lớp -->
+        <div class="page-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h6 class="fw-semibold mb-0">Thông tin lớp học</h6>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadClassForEdit(@Model.Id)">Sửa</button>
+            </div>
+            <table class="table table-borderless mb-0 small">
+                <tbody>
+                    <tr>
+                        <td class="text-muted ps-0" style="width:130px">Mã lớp</td>
+                        <td class="fw-medium">@Model.ClassCode</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Tên lớp</td>
+                        <td class="fw-medium">@Model.ClassName</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Mô tả</td>
+                        <td>@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Trạng thái</td>
+                        <td>
+                            @{
+                                var detailBadge = Model.Status switch {
+                                    "Active" => ("bg-success text-white", "bi-check-circle-fill", "Active"),
+                                    "Closed" => ("bg-danger text-white", "bi-x-circle-fill", "Closed"),
+                                    _ => ("bg-secondary text-white", "bi-pause-circle-fill", "Inactive")
+                                };
+                            }
+                            <span class="badge @detailBadge.Item1"><i class="bi @detailBadge.Item2 me-1"></i>@detailBadge.Item3</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Số SV</td>
+                        <td>@Model.StudentCount</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Ngày tạo</td>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Đổi trạng thái -->
+        <div class="page-card p-4 mb-4">
+            <h6 class="fw-semibold mb-3">Thay đổi trạng thái</h6>
+            <div class="d-flex flex-column gap-2">
+                @if (Model.Status != "Active")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Active" />
+                        <button type="submit" class="btn btn-success w-100">Active</button>
+                    </form>
+                }
+                @if (Model.Status != "Inactive")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Inactive" />
+                        <button type="submit" class="btn btn-warning w-100">Inactive</button>
+                    </form>
+                }
+                @if (Model.Status != "Closed")
+                {
+                    <form asp-action="SetStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Closed" />
+                        <button type="submit" class="btn btn-danger w-100">Closed</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <!-- Giáo viên phụ trách -->
+        <div class="page-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-semibold mb-0">Giáo viên phụ trách</h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                    <i class="bi bi-person-fill-gear me-1"></i>@(Model.Teacher != null ? "Thay đổi" : "Phân công")
+                </button>
+            </div>
+
+            @if (Model.Teacher == null)
+            {
+                <div class="text-center py-3">
+                    <i class="bi bi-person-x text-muted" style="font-size:2rem"></i>
+                    <p class="text-muted small mt-2 mb-0">Chưa có giáo viên phụ trách.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:42px;height:42px">
+                        <i class="bi bi-person-video3 text-dark"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">@Model.Teacher.FullName</div>
+                        <div class="text-muted small">@Model.Teacher.Email</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Teacher.PhoneNumber))
+                        {
+                            <div class="text-muted small">@Model.Teacher.PhoneNumber</div>
+                        }
+                        <div class="text-muted small">Phân công: @Model.Teacher.AssignedAt.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <form asp-action="RemoveTeacher" method="post"
+                          onsubmit="return confirm('Hủy phân công giáo viên @Model.Teacher.FullName khỏi lớp?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="classId" value="@Model.Id" />
+                        <input type="hidden" name="teacherId" value="@Model.Teacher.TeacherId" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hủy phân công">
+                            <i class="bi bi-person-dash"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Cột phải: danh sách sinh viên -->
+    <div class="col-lg-8">
+        <div class="page-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-semibold mb-0">Danh sách sinh viên (@Model.StudentCount)</h6>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#importStudentsModal">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Nhập Excel
+                    </button>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                        <i class="bi bi-plus-lg me-1"></i>Thêm sinh viên
+                    </button>
+                </div>
+            </div>
+
+            @if (!Model.Students.Any())
+            {
+                <p class="text-muted text-center py-3">Lớp chưa có sinh viên nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Họ và tên</th>
+                                <th>Email</th>
+                                <th>Số điện thoại</th>
+                                <th>Ngày vào lớp</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in Model.Students)
+                            {
+                                <tr>
+                                    <td class="fw-medium">@student.FullName</td>
+                                    <td>@student.Email</td>
+                                    <td>@(string.IsNullOrWhiteSpace(student.PhoneNumber) ? "—" : student.PhoneNumber)</td>
+                                    <td>@student.JoinedAt.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">
+                                        <form asp-action="AdminRemoveStudent" method="post" class="d-inline"
+                                              onsubmit="return confirm('Xóa sinh viên @student.FullName khỏi lớp?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="classId" value="@Model.Id" />
+                                            <input type="hidden" name="studentId" value="@student.StudentId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Import Students Modal -->
+<div class="modal fade" id="importStudentsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="AdminImportStudents" method="post" enctype="multipart/form-data" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="classId" value="@Model.Id" />
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Nhập sinh viên từ Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    File Excel cần có <strong>3 cột theo thứ tự</strong>: <strong>Họ và tên</strong>, <strong>Email</strong>, <strong>Số điện thoại</strong> (SĐT có thể để trống). Hàng đầu tiên là tiêu đề và sẽ bị bỏ qua.<br />
+                    Nếu email chưa có tài khoản, hệ thống sẽ <strong>tự động tạo tài khoản mới</strong> với mật khẩu mặc định là email.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Chọn file Excel <span class="text-danger">*</span></label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required />
+                    <div class="form-text">Chỉ hỗ trợ .xlsx, .xls</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-upload me-1"></i>Nhập</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Teacher Modal -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="AddTeacher" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="classId" value="@Model.Id" />
+            <div class="modal-header">
+                <h5 class="modal-title">@(Model.Teacher != null ? "Thay đổi giáo viên phụ trách" : "Phân công giáo viên")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tìm giáo viên</label>
+                    <input type="text" id="teacherSearchInput" class="form-control mb-2" placeholder="Nhập tên hoặc email..." autocomplete="off" />
+                    <select name="teacherId" id="teacherSelect" class="form-select" size="5" required>
+                        <option value="">— Nhập tên để tìm kiếm —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Phân công</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="AdminAddStudent" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="classId" value="@Model.Id" />
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm sinh viên vào lớp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tìm sinh viên</label>
+                    <input type="text" id="studentSearchInput" class="form-control mb-2" placeholder="Nhập tên hoặc email..." autocomplete="off" />
+                    <select name="studentId" id="studentSelect" class="form-select" size="5" required>
+                        <option value="">— Nhập tên để tìm kiếm —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Thêm vào lớp</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div class="modal fade" id="editClassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="Update" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editClassId" />
+            <div class="modal-header"><h5 class="modal-title">Cập nhật lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Mã lớp</label><input name="ClassCode" id="editClassCode" class="form-control" readonly /></div>
+                <div class="mb-3"><label class="form-label">Tên lớp <span class="text-danger">*</span></label><input name="ClassName" id="editClassName" class="form-control" required maxlength="200" /></div>
+                <div class="mb-3"><label class="form-label">Mô tả</label><textarea name="Description" id="editClassDescription" class="form-control" rows="2" maxlength="1000"></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Cập nhật</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadClassForEdit(id) {
+            const response = await fetch(`@Url.Action("GetForEdit", "Classes")?id=${id}`);
+            if (!response.ok) { alert('Không thể tải thông tin lớp học.'); return; }
+            const cls = await response.json();
+            document.getElementById('editClassId').value = cls.id;
+            document.getElementById('editClassCode').value = cls.classCode || '';
+            document.getElementById('editClassName').value = cls.className || '';
+            document.getElementById('editClassDescription').value = cls.description || '';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editClassModal')).show();
+        }
+
+        let teacherTimer;
+        document.getElementById('teacherSearchInput')?.addEventListener('input', function () {
+            clearTimeout(teacherTimer);
+            const keyword = this.value.trim();
+            if (keyword.length < 2) return;
+            teacherTimer = setTimeout(async () => {
+                const response = await fetch(`@Url.Action("GetTeacherOptions", "Classes")?keyword=${encodeURIComponent(keyword)}`);
+                const teachers = await response.json();
+                const select = document.getElementById('teacherSelect');
+                select.innerHTML = teachers.length === 0
+                    ? '<option value="">Không tìm thấy giáo viên</option>'
+                    : teachers.map(t => `<option value="${t.value}">${t.text}</option>`).join('');
+            }, 300);
+        });
+
+        let studentTimer;
+        document.getElementById('studentSearchInput')?.addEventListener('input', function () {
+            clearTimeout(studentTimer);
+            const keyword = this.value.trim();
+            if (keyword.length < 2) return;
+            studentTimer = setTimeout(async () => {
+                const response = await fetch(`@Url.Action("GetStudentOptionsAdmin", "Classes")?keyword=${encodeURIComponent(keyword)}`);
+                const students = await response.json();
+                const select = document.getElementById('studentSelect');
+                select.innerHTML = students.length === 0
+                    ? '<option value="">Không tìm thấy sinh viên</option>'
+                    : students.map(s => `<option value="${s.value}">${s.text}</option>`).join('');
+            }, 300);
+        });
+    </script>
+}

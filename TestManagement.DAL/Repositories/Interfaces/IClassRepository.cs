@@ -9,4 +9,6 @@ public interface IClassRepository : IRepository<Class>
     IQueryable<Class> GetQueryable();
     Task<bool> IsStudentInClassAsync(int studentId, int classId);
     Task<StudentClass?> GetStudentClassAsync(int studentId, int classId);
+    Task<bool> IsTeacherInClassAsync(int teacherId, int classId);
+    IQueryable<Class> GetQueryableForTeacher(int teacherId);
 }

@@ -9,7 +9,7 @@
             <h1 class="h4 mb-1">Quản lý câu hỏi</h1>
             <p class="text-muted mb-0">Quản lý câu hỏi multiple choice theo môn học.</p>
         </div>
-        @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+        @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
         {
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuestionModal">Tạo câu hỏi</button>
         }
@@ -67,11 +67,30 @@
                     <tr>
                         <td><span class="fw-semibold">@question.SubjectCode</span><br /><small class="text-muted">@question.SubjectName</small></td>
                         <td><div class="text-truncate-2" style="max-width: 520px;">@question.Content</div></td>
-                        <td><span class="badge text-bg-info">@question.Difficulty</span></td>
-                        <td><span class="badge @(question.Status == "Active" ? "text-bg-success" : "text-bg-secondary")">@question.Status</span></td>
+                        <td>
+                            @{
+                                var diffBadge = question.Difficulty switch {
+                                    "Easy" => ("bg-success text-white", "bi-emoji-smile-fill", "Easy"),
+                                    "Medium" => ("bg-warning text-dark", "bi-emoji-neutral-fill", "Medium"),
+                                    "Hard" => ("bg-danger text-white", "bi-emoji-angry-fill", "Hard"),
+                                    _ => ("bg-secondary text-white", "bi-question-circle-fill", question.Difficulty)
+                                };
+                            }
+                            <span class="badge @diffBadge.Item1"><i class="bi @diffBadge.Item2 me-1"></i>@diffBadge.Item3</span>
+                        </td>
+                        <td>
+                            @if (question.Status == "Active")
+                            {
+                                <span class="badge bg-success text-white"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary text-white"><i class="bi bi-pause-circle-fill me-1"></i>Inactive</span>
+                            }
+                        </td>
                         <td>@question.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td class="text-end">
-                            @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                            @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
                             {
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadQuestionForEdit(@question.Id)">Sửa</button>
                                 <button type="button" class="btn btn-sm btn-outline-danger js-delete" data-delete-url="@Url.Action("Delete", "Questions", new { id = question.Id })" data-delete-name="câu hỏi #@question.Id">Xóa</button>
@@ -92,7 +111,7 @@
     </div>
 </div>
 
-@if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+@if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
 {
     <div class="modal fade" id="createQuestionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">

@@ -15,4 +15,6 @@ public class CreateClassRequest
 
     [Required, MaxLength(20)]
     public string Status { get; set; } = "Active";
+
+    public int? CreatedBy { get; set; }
 }
