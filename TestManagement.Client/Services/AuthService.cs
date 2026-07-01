@@ -22,9 +22,9 @@ public class AuthService
         return _apiClient.PostEmptyAsync("api/auth/logout");
     }
 
-    public Task<ApiResult<CurrentUserViewModel>> UpdateProfileAsync(UpdateProfileViewModel model)
+    public Task<ApiResult<string>> UpdateProfileAsync(UpdateProfileViewModel model)
     {
-        return _apiClient.PutAsync<UpdateProfileViewModel, CurrentUserViewModel>("api/auth/me", model);
+        return _apiClient.PutAsync("api/auth/me", model);
     }
 
     public Task<ApiResult<CurrentUserViewModel>> GetCurrentUserAsync()
