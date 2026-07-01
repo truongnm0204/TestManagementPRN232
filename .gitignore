@@ -75,3 +75,4 @@ artifacts/build/Debug/net8.0
 *.json
 
 docs/
+plans/

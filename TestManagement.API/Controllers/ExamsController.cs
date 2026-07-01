@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
+using TestManagement.BAL.DTOs.ExamAssignments;
 using TestManagement.BAL.DTOs.Exams;
 using TestManagement.BAL.Services.Interfaces;
 
@@ -13,10 +14,12 @@ namespace TestManagement.API.Controllers;
 public class ExamsController : ControllerBase
 {
     private readonly IExamService _examService;
+    private readonly IExamAssignmentService _examAssignmentService;
 
-    public ExamsController(IExamService examService)
+    public ExamsController(IExamService examService, IExamAssignmentService examAssignmentService)
     {
         _examService = examService;
+        _examAssignmentService = examAssignmentService;
     }
 
     // GET api/exams — OData: hỗ trợ $filter, $orderby, $top, $skip, $count
@@ -94,6 +97,39 @@ public class ExamsController : ControllerBase
         if (!result.Success || result.Data == null) return BadRequest(result.Error);
 
         return Ok(result.Data);
+    }
+
+    // GET api/exams/{id}/assignments — danh sách lớp đã được giao đề
+    [HttpGet("{id}/assignments")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GetAssignments(int id)
+    {
+        var result = await _examAssignmentService.GetByExamIdAsync(id);
+        if (!result.Success || result.Data == null) return BadRequest(result.Error);
+        return Ok(result.Data);
+    }
+
+    // POST api/exams/{id}/assignments — giao đề cho một lớp
+    [HttpPost("{id}/assignments")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> AssignToClass(int id, [FromBody] AssignExamRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var result = await _examAssignmentService.AssignAsync(id, request, GetCurrentUserId());
+        if (!result.Success || result.Data == null) return BadRequest(result.Error);
+
+        return Ok(result.Data);
+    }
+
+    // DELETE api/exams/{id}/assignments/{assignmentId} — xóa phân công đề thi khỏi lớp
+    [HttpDelete("{id}/assignments/{assignmentId}")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> RemoveAssignment(int id, int assignmentId)
+    {
+        var result = await _examAssignmentService.RemoveAsync(id, assignmentId);
+        if (!result.Success) return BadRequest(result.Error);
+        return Ok("Xóa phân công đề thi thành công.");
     }
 
     // DELETE api/exams/{id} — soft delete, chỉ Admin
