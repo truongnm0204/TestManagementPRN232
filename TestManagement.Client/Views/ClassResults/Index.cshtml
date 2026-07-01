@@ -1,0 +1,49 @@
+@model List<TestManagement.Client.Models.ExamResults.ExamAssignmentSummaryViewModel>
+@{
+    ViewData["Title"] = "Kết quả lớp";
+}
+
+<div class="page-card p-4">
+    <div class="mb-3">
+        <h1 class="h4 mb-1">Kết quả lớp</h1>
+        <p class="text-muted mb-0">Chọn một đề thi đã giao để xem kết quả của lớp.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info mb-0">Chưa có đề thi nào được giao cho lớp.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Đề thi</th>
+                        <th>Môn</th>
+                        <th>Lớp</th>
+                        <th>Ngày giao</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.ExamTitle</td>
+                            <td><span class="badge text-bg-primary">@item.SubjectCode</span></td>
+                            <td>@item.ClassName</td>
+                            <td>@item.AssignedAt.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-action="ClassResult"
+                                   asp-route-examId="@item.ExamId"
+                                   asp-route-classId="@item.ClassId">Xem kết quả</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

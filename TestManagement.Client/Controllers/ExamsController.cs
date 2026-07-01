@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TestManagement.Client.Models.ExamAssignments;
 using TestManagement.Client.Models.Exams;
 using TestManagement.Client.Models.Questions;
 using TestManagement.Client.Services;
@@ -12,12 +13,14 @@ public class ExamsController : Controller
     private readonly ExamService _examService;
     private readonly QuestionService _questionService;
     private readonly SubjectService _subjectService;
+    private readonly ClassService _classService;
 
-    public ExamsController(ExamService examService, QuestionService questionService, SubjectService subjectService)
+    public ExamsController(ExamService examService, QuestionService questionService, SubjectService subjectService, ClassService classService)
     {
         _examService = examService;
         _questionService = questionService;
         _subjectService = subjectService;
+        _classService = classService;
     }
 
     public async Task<IActionResult> Index(string? keyword, int? subjectId, string? status, bool? isPublished, int page = 1, int pageSize = 10)
@@ -209,11 +212,20 @@ public class ExamsController : Controller
             .ThenBy(x => x.QuestionId)
             .ToList();
 
+        var assignmentsResult = await _examService.GetAssignmentsAsync(id);
+        var assignments = assignmentsResult.Data ?? new List<ExamAssignmentViewModel>();
+
+        var activeClasses = await _classService.GetActiveClassesAsync();
+        var assignedClassIds = assignments.Select(a => a.ClassId).ToHashSet();
+        var availableClasses = activeClasses.Where(c => !assignedClassIds.Contains(c.Id)).ToList();
+
         return View(new ExamComposeViewModel
         {
             Exam = examResult.Data,
             SelectedQuestions = selectedQuestions,
-            CandidateQuestions = candidates
+            CandidateQuestions = candidates,
+            Assignments = assignments,
+            ActiveClasses = availableClasses
         });
     }
 
@@ -266,6 +278,34 @@ public class ExamsController : Controller
         {
             TempData["Error"] = result.Error ?? "Publish đề thi không thành công.";
         }
+        return RedirectToAction(nameof(Compose), new { id });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,Staff")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignToClass(int id, [Bind(Prefix = "AssignForm")] AssignExamToClassViewModel model)
+    {
+        if (!ModelState.IsValid || model.ClassId <= 0)
+        {
+            TempData["Error"] = "Vui lòng chọn lớp học hợp lệ.";
+            return RedirectToAction(nameof(Compose), new { id });
+        }
+
+        var result = await _examService.AssignClassAsync(id, model);
+        TempData[result.Success ? "Success" : "Error"] = result.Success
+            ? $"Giao đề thi cho lớp thành công."
+            : result.Error;
+        return RedirectToAction(nameof(Compose), new { id });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,Staff")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveAssignment(int id, int assignmentId)
+    {
+        var result = await _examService.RemoveAssignmentAsync(id, assignmentId);
+        TempData[result.Success ? "Success" : "Error"] = result.Success ? "Đã xóa phân công đề thi." : result.Error;
         return RedirectToAction(nameof(Compose), new { id });
     }
 

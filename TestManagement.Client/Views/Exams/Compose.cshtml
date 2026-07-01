@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Chọn câu hỏi cho đề thi";
     var canEdit = Model.CanEdit && (User.IsInRole("Admin") || User.IsInRole("Staff"));
+    var canAssign = Model.CanAssign && (User.IsInRole("Admin") || User.IsInRole("Staff"));
 }
 
 <div class="page-card p-4">
@@ -107,7 +108,7 @@
                     </div>
                 </div>
 
-                <div class="border rounded-3 p-3 bg-white">
+                <div class="border rounded-3 p-3 bg-white mb-3">
                     <h2 class="h6 mb-2">Publish đề thi</h2>
                     <p class="text-muted small">Publish sẽ tạo snapshot cố định và answer key để dùng cho luồng làm bài/chấm điểm. Sau publish không thể sửa cấu hình hoặc câu hỏi.</p>
                     @if (canEdit)
@@ -122,6 +123,79 @@
                         <div class="alert alert-success small mb-0">Đề thi đã được publish@(Model.Exam.PublishedAt.HasValue ? $" lúc {Model.Exam.PublishedAt.Value:dd/MM/yyyy HH:mm}." : ".")</div>
                     }
                 </div>
+
+                @* Phần Giao đề thi cho lớp *@
+                <div class="border rounded-3 bg-white">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h6 mb-0">Giao đề thi cho lớp</h2>
+                            <p class="text-muted small mb-0">Chỉ đề đã publish mới được giao cho lớp Active.</p>
+                        </div>
+                        <span class="badge text-bg-secondary">@Model.Assignments.Count lớp</span>
+                    </div>
+
+                    @if (canAssign)
+                    {
+                        <div class="p-3 border-bottom">
+                            <form asp-action="AssignToClass" asp-route-id="@Model.Exam.Id" method="post" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <select name="AssignForm.ClassId" class="form-select form-select-sm" id="assignClassSelect" required>
+                                    <option value="">-- Chọn lớp --</option>
+                                    @foreach (var cls in Model.ActiveClasses)
+                                    {
+                                        <option value="@cls.Id">@cls.ClassCode - @cls.ClassName</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary text-nowrap"
+                                        @(Model.ActiveClasses.Any() ? "" : "disabled")>
+                                    Giao đề
+                                </button>
+                            </form>
+                            @if (!Model.ActiveClasses.Any())
+                            {
+                                <small class="text-muted mt-1 d-block">Tất cả lớp Active đã được giao đề này.</small>
+                            }
+                        </div>
+                    }
+                    else if (!Model.Exam.IsPublished)
+                    {
+                        <div class="p-3">
+                            <div class="alert alert-warning small mb-0">Cần publish đề thi trước khi giao cho lớp.</div>
+                        </div>
+                    }
+
+                    <div class="list-group list-group-flush">
+                        @if (!Model.Assignments.Any())
+                        {
+                            <div class="list-group-item text-muted py-3 text-center small">Chưa giao cho lớp nào.</div>
+                        }
+                        @foreach (var assignment in Model.Assignments.OrderByDescending(x => x.AssignedAt))
+                        {
+                            <div class="list-group-item px-3 py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold small">@assignment.ClassCode — @assignment.ClassName</div>
+                                        <small class="text-muted">
+                                            Giao bởi @assignment.AssignerName
+                                            • @assignment.AssignedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                    @if (canAssign)
+                                    {
+                                        <form asp-action="RemoveAssignment" asp-route-id="@Model.Exam.Id" asp-route-assignmentId="@assignment.Id" method="post" class="ms-2">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Xóa phân công đề thi cho lớp @(assignment.ClassCode)?')">
+                                                Xóa
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
             </div>
         </div>
     </form>

@@ -1,0 +1,112 @@
+@model TestManagement.Client.Models.ExamResults.ClassResultViewModel
+@{
+    ViewData["Title"] = "Theo dõi: " + Model.ExamTitle;
+}
+
+<div class="page-card p-4" id="monitor-root"
+     data-exam-id="@Model.ExamId"
+     data-class-id="@Model.ClassId">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">@Model.ExamTitle <span class="badge text-bg-info" id="live-badge">LIVE</span></h1>
+            <p class="text-muted mb-0">Lớp @Model.ClassName · Theo dõi trạng thái làm bài trực tiếp</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="ClassResult" asp-route-examId="@Model.ExamId" asp-route-classId="@Model.ClassId">Xem kết quả</a>
+    </div>
+
+    <div id="conn-status" class="small text-muted mb-2">Đang kết nối...</div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Học viên</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Điểm</th>
+                    <th>Cập nhật</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr data-student-id="@row.StudentId">
+                        <td class="fw-semibold">@row.StudentName</td>
+                        <td class="status-cell">
+                            @if (row.HasSubmitted)
+                            {
+                                <span class="badge text-bg-success">Đã nộp</span>
+                            }
+                            else if (row.HasInProgress)
+                            {
+                                <span class="badge text-bg-warning">Đang làm</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Chưa làm</span>
+                            }
+                        </td>
+                        <td class="text-center score-cell">@(row.TotalScore.HasValue ? $"{row.TotalScore} / {Model.MaxScore}" : "-")</td>
+                        <td class="time-cell text-muted small">@(row.SubmittedAt?.ToString("HH:mm:ss") ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
+    <script>
+        (function () {
+            const root = document.getElementById("monitor-root");
+            const examId = parseInt(root.dataset.examId);
+            const classId = parseInt(root.dataset.classId);
+            const apiBase = document.querySelector('meta[name="api-base"]').content;
+            const statusEl = document.getElementById("conn-status");
+            const maxScore = @Model.MaxScore;
+
+            function badge(status) {
+                if (status === "Submitted") return '<span class="badge text-bg-success">Đã nộp</span>';
+                if (status === "InProgress") return '<span class="badge text-bg-warning">Đang làm</span>';
+                return '<span class="badge text-bg-secondary">Chưa làm</span>';
+            }
+
+            function updateRow(d) {
+                const row = root.querySelector('tr[data-student-id="' + d.studentId + '"]');
+                if (!row) return;
+                row.querySelector(".status-cell").innerHTML = badge(d.status);
+                if (d.status === "Submitted" && d.score != null) {
+                    row.querySelector(".score-cell").textContent = d.score + " / " + maxScore;
+                }
+                row.querySelector(".time-cell").textContent = new Date(d.at).toLocaleTimeString();
+                row.classList.add("table-active");
+                setTimeout(() => row.classList.remove("table-active"), 1500);
+            }
+
+            async function start() {
+                const tokenRes = await fetch("/Auth/Token");
+                const token = (await tokenRes.json()).token;
+                if (!token) { statusEl.textContent = "Không lấy được token."; return; }
+
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(apiBase + "hubs/exam-monitor", { accessTokenFactory: () => token })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on("StudentStatusChanged", updateRow);
+
+                try {
+                    await connection.start();
+                    await connection.invoke("JoinExamRoom", examId, classId);
+                    statusEl.textContent = "Đã kết nối — cập nhật realtime.";
+                    statusEl.className = "small text-success mb-2";
+                } catch (err) {
+                    console.error(err);
+                    statusEl.textContent = "Kết nối thất bại.";
+                    statusEl.className = "small text-danger mb-2";
+                }
+            }
+            start();
+        })();
+    </script>
+}

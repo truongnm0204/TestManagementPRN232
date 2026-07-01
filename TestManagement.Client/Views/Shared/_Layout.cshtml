@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
+@inject Microsoft.Extensions.Options.IOptions<TestManagement.Client.Configuration.ApiSettings> ApiOptions
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="api-base" content="@ApiOptions.Value.BaseUrl" />
     <title>@ViewData["Title"] - TestManagement</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -19,6 +21,19 @@
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <li class="nav-item dropdown me-lg-2">
+                            <a class="nav-link position-relative" href="#" id="notifBell" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                🔔
+                                <span id="notif-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 320px; max-height: 400px; overflow-y: auto;" id="notif-list">
+                                <li><h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                                    Thông báo
+                                    <button type="button" class="btn btn-sm btn-link p-0" id="notif-mark-all">Đọc tất cả</button>
+                                </h6></li>
+                                <li><div id="notif-empty" class="dropdown-item-text text-muted small">Chưa có thông báo.</div></li>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @User.Identity.Name (@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)
@@ -62,6 +77,10 @@
                         <a class="nav-link" asp-controller="Exams" asp-action="Index">Đề thi</a>
                     }
                     <a class="nav-link" asp-controller="Classes" asp-action="Index">Lớp học</a>
+                    @if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
+                    {
+                        <a class="nav-link" asp-controller="ClassResults" asp-action="Index">Kết quả lớp</a>
+                    }
                 </nav>
             </aside>
         }
@@ -83,6 +102,11 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
+        <script src="~/js/notifications.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

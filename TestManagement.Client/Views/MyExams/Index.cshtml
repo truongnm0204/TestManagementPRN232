@@ -1,0 +1,82 @@
+@model List<TestManagement.Client.Models.ExamAttempts.MyExamItemViewModel>
+@{
+    ViewData["Title"] = "Bài thi của tôi";
+}
+
+<div class="page-card p-4">
+    <div class="mb-3">
+        <h1 class="h4 mb-1">Bài thi của tôi</h1>
+        <p class="text-muted mb-0">Danh sách các đề thi được giao cho lớp của bạn.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info mb-0">Hiện chưa có đề thi nào được giao cho bạn.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var exam in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge text-bg-primary">@exam.SubjectCode</span>
+                                @if (exam.HasSubmitted)
+                                {
+                                    <span class="badge text-bg-success">Đã nộp</span>
+                                }
+                                else if (exam.HasInProgress)
+                                {
+                                    <span class="badge text-bg-warning">Đang làm</span>
+                                }
+                            </div>
+
+                            <h2 class="h6 fw-semibold">@exam.Title</h2>
+                            <p class="text-muted small mb-2">@exam.SubjectName · Lớp @exam.ClassName</p>
+
+                            <ul class="list-unstyled small text-muted mb-3">
+                                <li>Thời gian: <strong>@exam.DurationMinutes phút</strong></li>
+                                <li>Số câu: <strong>@exam.QuestionCount</strong> · Điểm tối đa: <strong>@exam.TotalPoints</strong></li>
+                                <li>Lượt làm: <strong>@exam.AttemptsDone / @exam.AttemptLimit</strong></li>
+                                @if (exam.AvailableTo.HasValue)
+                                {
+                                    <li>Hạn: <strong>@exam.AvailableTo.Value.ToString("dd/MM/yyyy HH:mm")</strong></li>
+                                }
+                            </ul>
+
+                            <div class="mt-auto d-flex gap-2">
+                                @if (exam.HasInProgress)
+                                {
+                                    <form method="post" asp-action="Start" class="flex-grow-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="examId" value="@exam.ExamId" />
+                                        <button type="submit" class="btn btn-warning w-100">Làm tiếp</button>
+                                    </form>
+                                }
+                                else if (exam.CanStart)
+                                {
+                                    <form method="post" asp-action="Start" class="flex-grow-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="examId" value="@exam.ExamId" />
+                                        <button type="submit" class="btn btn-primary w-100">Bắt đầu làm bài</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-secondary flex-grow-1" disabled>Không thể làm</button>
+                                }
+
+                                @if (exam.HasSubmitted && exam.LatestAttemptId.HasValue)
+                                {
+                                    <a class="btn btn-outline-success" asp-action="Result" asp-route-attemptId="@exam.LatestAttemptId">Kết quả</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

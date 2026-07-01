@@ -115,4 +115,13 @@ public class AuthController : Controller
     {
         return View();
     }
+
+    // Trả JWT (lưu server-side session) cho JS để kết nối SignalR hub
+    [HttpGet]
+    [Authorize]
+    public IActionResult Token()
+    {
+        var token = HttpContext.Session.GetString(SessionKeys.AccessToken);
+        return Json(new { token });
+    }
 }

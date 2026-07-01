@@ -1,0 +1,59 @@
+@model List<TestManagement.Client.Models.ExamResults.AnswerHistoryViewModel>
+@{
+    ViewData["Title"] = "Lịch sử đổi đáp án";
+}
+
+<div class="page-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">Lịch sử đổi đáp án</h1>
+            <p class="text-muted mb-0">Theo dõi các lần thay đổi lựa chọn của học viên trong bài làm.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="javascript:history.back()">Quay lại</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info mb-0">Không có dữ liệu câu hỏi.</div>
+    }
+    else
+    {
+        @foreach (var q in Model)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="fw-semibold mb-2">Câu @q.SortOrder</div>
+                    <p class="mb-3">@q.Content</p>
+
+                    @if (!q.Changes.Any())
+                    {
+                        <p class="text-muted small mb-0">Không có lịch sử đổi đáp án (chưa chọn hoặc bài làm cũ).</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var c in q.Changes)
+                            {
+                                <li class="d-flex align-items-center mb-1 small">
+                                    <span class="text-muted me-2" style="min-width: 130px;">@c.At.ToString("dd/MM HH:mm:ss")</span>
+                                    @if (c.FromLabel == null)
+                                    {
+                                        <span>Chọn <span class="badge text-bg-primary">@(c.ToLabel ?? "—")</span></span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            <span class="badge text-bg-secondary">@c.FromLabel</span>
+                                            <span class="mx-1">→</span>
+                                            <span class="badge text-bg-primary">@(c.ToLabel ?? "Bỏ chọn")</span>
+                                        </span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

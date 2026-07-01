@@ -1,0 +1,134 @@
+@model TestManagement.Client.Models.ExamAttempts.TakeExamViewModel
+@{
+    ViewData["Title"] = "Làm bài: " + Model.ExamTitle;
+    Layout = "_Layout";
+}
+
+<div class="page-card p-4" id="take-exam"
+     data-attempt-id="@Model.AttemptId"
+     data-deadline="@(Model.DeadlineAt?.ToString("o"))"
+     data-save-url="@Url.Action("SaveAnswer", "MyExams")"
+     data-submit-url="@Url.Action("Submit", "MyExams")">
+
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-1">@Model.ExamTitle</h1>
+            <p class="text-muted mb-0">Số câu: @Model.QuestionCount · Điểm tối đa: @Model.TotalPoints</p>
+        </div>
+        <div class="text-end">
+            <div class="text-muted small">Thời gian còn lại</div>
+            <div class="h3 mb-0 fw-bold text-primary" id="countdown">--:--</div>
+        </div>
+    </div>
+
+    <div id="save-status" class="small text-muted mb-3">&nbsp;</div>
+
+    <form id="answers-form">
+        @foreach (var q in Model.Questions)
+        {
+            var savedOption = Model.SavedAnswers.TryGetValue(q.QuestionId, out var sel) ? sel : (int?)null;
+            <div class="card mb-3 question-card" data-question-id="@q.QuestionId">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-semibold">Câu @q.SortOrder</span>
+                        <span class="badge text-bg-light">@q.Points điểm</span>
+                    </div>
+                    <p class="mb-3">@q.Content</p>
+
+                    <div class="options">
+                        @foreach (var opt in q.Options)
+                        {
+                            var inputId = $"q{q.QuestionId}_o{opt.OptionId}";
+                            <div class="form-check mb-2">
+                                <input class="form-check-input answer-option" type="radio"
+                                       name="q_@q.QuestionId" id="@inputId"
+                                       value="@opt.OptionId"
+                                       checked="@(savedOption == opt.OptionId)" />
+                                <label class="form-check-label" for="@inputId">
+                                    <strong>@opt.Label.</strong> @opt.Content
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </form>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-success btn-lg" id="btn-submit">Nộp bài</button>
+    </div>
+</div>
+
+<form id="submit-form" method="post" asp-action="Submit" class="d-none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="attemptId" value="@Model.AttemptId" />
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            const root = document.getElementById('take-exam');
+            const attemptId = root.dataset.attemptId;
+            const saveUrl = root.dataset.saveUrl;
+            const deadline = root.dataset.deadline ? new Date(root.dataset.deadline) : null;
+            const token = root.querySelector('input[name="__RequestVerificationToken"]').value;
+            const statusEl = document.getElementById('save-status');
+            const submitForm = document.getElementById('submit-form');
+
+            // ── Auto-save: gọi mỗi khi student chọn 1 đáp án ──
+            async function saveAnswer(questionId, optionId) {
+                statusEl.textContent = 'Đang lưu...';
+                const body = new URLSearchParams();
+                body.append('attemptId', attemptId);
+                body.append('QuestionId', questionId);
+                if (optionId != null) body.append('SelectedOptionId', optionId);
+                body.append('__RequestVerificationToken', token);
+
+                try {
+                    const res = await fetch(saveUrl, { method: 'POST', body });
+                    const data = await res.json();
+                    statusEl.textContent = data.success ? 'Đã lưu lúc ' + new Date().toLocaleTimeString() : ('Lỗi: ' + data.error);
+                } catch {
+                    statusEl.textContent = 'Không lưu được. Kiểm tra kết nối mạng.';
+                }
+            }
+
+            root.querySelectorAll('.answer-option').forEach(function (input) {
+                input.addEventListener('change', function () {
+                    const card = input.closest('.question-card');
+                    saveAnswer(card.dataset.questionId, input.value);
+                });
+            });
+
+            // ── Countdown: đếm ngược tới deadline, hết giờ tự nộp ──
+            const countdownEl = document.getElementById('countdown');
+            let submitted = false;
+
+            function tick() {
+                if (!deadline) { countdownEl.textContent = '∞'; return; }
+                const remainMs = deadline - new Date();
+                if (remainMs <= 0) {
+                    countdownEl.textContent = '00:00';
+                    if (!submitted) { submitted = true; alert('Hết giờ! Bài thi sẽ được nộp tự động.'); submitForm.submit(); }
+                    return;
+                }
+                const totalSec = Math.floor(remainMs / 1000);
+                const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+                const s = String(totalSec % 60).padStart(2, '0');
+                countdownEl.textContent = m + ':' + s;
+                if (totalSec <= 60) countdownEl.classList.add('text-danger');
+            }
+            tick();
+            setInterval(tick, 1000);
+
+            // ── Nộp bài thủ công ──
+            document.getElementById('btn-submit').addEventListener('click', function () {
+                if (submitted) return;
+                if (confirm('Bạn chắc chắn muốn nộp bài?')) { submitted = true; submitForm.submit(); }
+            });
+        })();
+    </script>
+}
