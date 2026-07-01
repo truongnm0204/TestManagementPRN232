@@ -60,4 +60,10 @@ public class ClassService
     {
         return _apiClient.DeleteAsync($"api/classes/{classId}/students/{studentId}");
     }
+
+    public async Task<List<ClassItemViewModel>> GetActiveClassesAsync()
+    {
+        var result = await GetListAsync(null, "Active", 1, 200);
+        return result.Data?.Items ?? new List<ClassItemViewModel>();
+    }
 }

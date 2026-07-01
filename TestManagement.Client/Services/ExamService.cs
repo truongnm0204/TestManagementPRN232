@@ -1,4 +1,5 @@
 using TestManagement.Client.Models.Common;
+using TestManagement.Client.Models.ExamAssignments;
 using TestManagement.Client.Models.Exams;
 
 namespace TestManagement.Client.Services;
@@ -78,5 +79,20 @@ public class ExamService
     public Task<ApiResult<PublishExamViewModel>> PublishAsync(int id)
     {
         return _apiClient.PostEmptyAsync<PublishExamViewModel>($"api/exams/{id}/publish");
+    }
+
+    public Task<ApiResult<List<ExamAssignmentViewModel>>> GetAssignmentsAsync(int id)
+    {
+        return _apiClient.GetAsync<List<ExamAssignmentViewModel>>($"api/exams/{id}/assignments");
+    }
+
+    public Task<ApiResult<ExamAssignmentViewModel>> AssignClassAsync(int id, AssignExamToClassViewModel model)
+    {
+        return _apiClient.PostAsync<AssignExamToClassViewModel, ExamAssignmentViewModel>($"api/exams/{id}/assignments", model);
+    }
+
+    public Task<ApiResult<string>> RemoveAssignmentAsync(int id, int assignmentId)
+    {
+        return _apiClient.DeleteAsync($"api/exams/{id}/assignments/{assignmentId}");
     }
 }
