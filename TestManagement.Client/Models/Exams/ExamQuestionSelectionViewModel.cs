@@ -9,4 +9,7 @@ public class ExamQuestionSelectionViewModel
     public bool IsSelected { get; set; }
     public decimal Points { get; set; } = 1;
     public int SortOrder { get; set; }
+
+    // Đáp án của câu hỏi để giáo viên xem trực tiếp khi chọn câu hỏi
+    public List<Questions.QuestionOptionFormViewModel> Options { get; set; } = new();
 }

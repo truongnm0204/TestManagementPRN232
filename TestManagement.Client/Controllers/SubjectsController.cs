@@ -5,7 +5,7 @@ using TestManagement.Client.Services;
 
 namespace TestManagement.Client.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Admin,Staff,Teacher")]
 public class SubjectsController : Controller
 {
     private readonly SubjectService _subjectService;

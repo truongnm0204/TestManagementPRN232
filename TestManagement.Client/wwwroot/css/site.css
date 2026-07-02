@@ -111,3 +111,14 @@ body {
     border-bottom: 1px solid #dee2e6;
   }
 }
+
+/* Shim cho .text-bg-* — Bootstrap 5.1.0 chưa có các class này (thêm từ 5.2+),
+   nên badge dùng text-bg-* bị mất màu nền (trắng). Định nghĩa lại thủ công. */
+.text-bg-primary { color: #fff !important; background-color: #0d6efd !important; }
+.text-bg-secondary { color: #fff !important; background-color: #6c757d !important; }
+.text-bg-success { color: #fff !important; background-color: #198754 !important; }
+.text-bg-danger { color: #fff !important; background-color: #dc3545 !important; }
+.text-bg-warning { color: #000 !important; background-color: #ffc107 !important; }
+.text-bg-info { color: #000 !important; background-color: #0dcaf0 !important; }
+.text-bg-light { color: #000 !important; background-color: #f8f9fa !important; }
+.text-bg-dark { color: #fff !important; background-color: #212529 !important; }

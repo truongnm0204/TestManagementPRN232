@@ -73,27 +73,36 @@
                     <a class="@(_ctrl == "Home" ? "nav-link active" : "nav-link")" asp-controller="Home" asp-action="Index">
                         <i class="bi bi-grid me-2"></i>Tổng quan
                     </a>
-                    @if (User.IsInRole("Admin"))
+                    @if (User.IsInRole("Student"))
                     {
-                        <a class="@(_ctrl == "Users" ? "nav-link active" : "nav-link")" asp-controller="Users" asp-action="Index">
-                            <i class="bi bi-people me-2"></i>Người dùng
-                        </a>
-                        <a class="@(_ctrl == "Classes" ? "nav-link active" : "nav-link")" asp-controller="Classes" asp-action="AdminIndex">
-                            <i class="bi bi-building me-2"></i>Lớp học
+                        <a class="@(_ctrl == "MyExams" ? "nav-link active" : "nav-link")" asp-controller="MyExams" asp-action="Index">
+                            <i class="bi bi-pencil-square me-2"></i>Bài thi của tôi
                         </a>
                     }
-                    <a class="nav-link" asp-controller="Classes" asp-action="Index">Lớp học</a>
-                    <a class="nav-link" asp-controller="Subjects" asp-action="Index">Môn học</a>
-                    <a class="nav-link" asp-controller="Topics" asp-action="Index">Chủ đề</a>
-                    <a class="nav-link" asp-controller="Questions" asp-action="Index">Câu hỏi</a>
-                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                    else
                     {
-                        <a class="nav-link" asp-controller="Exams" asp-action="Index">Đề thi</a>
-                    }
-                    <a class="nav-link" asp-controller="Classes" asp-action="Index">Lớp học</a>
-                    @if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
-                    {
-                        <a class="nav-link" asp-controller="ClassResults" asp-action="Index">Kết quả lớp</a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="@(_ctrl == "Users" ? "nav-link active" : "nav-link")" asp-controller="Users" asp-action="Index">
+                                <i class="bi bi-people me-2"></i>Người dùng
+                            </a>
+                            <a class="@(_ctrl == "Classes" ? "nav-link active" : "nav-link")" asp-controller="Classes" asp-action="AdminIndex">
+                                <i class="bi bi-building me-2"></i>Lớp học
+                            </a>
+                        }
+                        @if (User.IsInRole("Teacher"))
+                        {
+                            <a class="@(_ctrl == "Classes" ? "nav-link active" : "nav-link")" asp-controller="Classes" asp-action="Index">
+                                <i class="bi bi-building me-2"></i>Lớp học
+                            </a>
+                        }
+                        <a class="@(_ctrl == "Subjects" ? "nav-link active" : "nav-link")" asp-controller="Subjects" asp-action="Index">Môn học</a>
+                        <a class="@(_ctrl == "Topics" ? "nav-link active" : "nav-link")" asp-controller="Topics" asp-action="Index">Chủ đề</a>
+                        <a class="@(_ctrl == "Questions" ? "nav-link active" : "nav-link")" asp-controller="Questions" asp-action="Index">Câu hỏi</a>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                        {
+                            <a class="@(_ctrl == "Exams" ? "nav-link active" : "nav-link")" asp-controller="Exams" asp-action="Index">Đề thi</a>
+                        }
                     }
                 </nav>
             </aside>

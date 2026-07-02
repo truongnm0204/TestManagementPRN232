@@ -14,4 +14,7 @@ public class QuestionODataResponse
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public int? CreatedByUserId { get; set; }
+
+    // Danh sách đáp án để hiển thị khi giáo viên chọn câu hỏi cho đề thi
+    public List<QuestionOptionResponse> Options { get; set; } = new();
 }

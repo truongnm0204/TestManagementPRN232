@@ -15,8 +15,8 @@ public class ClassResultsController : Controller
         _resultService = resultService;
     }
 
-    // GET /ClassResults — danh sách cặp (đề × lớp) đã giao
-    public async Task<IActionResult> Index()
+    // GET /ClassResults — danh sách cặp (đề × lớp) đã giao; lọc theo lớp nếu có classId
+    public async Task<IActionResult> Index(int? classId)
     {
         var result = await _resultService.GetAssignmentsAsync();
         if (!result.Success)
@@ -24,7 +24,14 @@ public class ClassResultsController : Controller
             TempData["Error"] = result.Error;
         }
 
-        return View(result.Data ?? new List<ExamAssignmentSummaryViewModel>());
+        var items = result.Data ?? new List<ExamAssignmentSummaryViewModel>();
+        if (classId.HasValue)
+        {
+            items = items.Where(x => x.ClassId == classId.Value).ToList();
+            ViewBag.ClassName = items.FirstOrDefault()?.ClassName;
+        }
+
+        return View(items);
     }
 
     // GET /ClassResults/ClassResult?examId={}&classId={} — bảng điểm cả lớp

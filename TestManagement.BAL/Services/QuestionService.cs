@@ -39,7 +39,17 @@ public class QuestionService : IQuestionService
             Difficulty = question.Difficulty,
             Status = question.Status,
             CreatedAt = question.CreatedAt,
-            CreatedByUserId = question.CreatedByUserId
+            CreatedByUserId = question.CreatedByUserId,
+            Options = question.Options
+                .OrderBy(o => o.SortOrder)
+                .Select(o => new QuestionOptionResponse
+                {
+                    Id = o.Id,
+                    Label = o.Label,
+                    Content = o.Content,
+                    IsCorrect = o.IsCorrect,
+                    SortOrder = o.SortOrder
+                }).ToList()
         });
     }
 

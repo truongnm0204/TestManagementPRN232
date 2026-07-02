@@ -49,15 +49,23 @@ public class Program
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            })
-            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            });
+
+        // Chỉ đăng ký Google OAuth khi đã cấu hình ClientId/ClientSecret,
+        // tránh lỗi "The 'ClientId' option must be provided" lúc khởi động khi để trống.
+        var googleClientId = builder.Configuration["Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+        if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+        {
+            builder.Services.AddAuthentication().AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
             {
-                options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
-                options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
+                options.ClientId = googleClientId;
+                options.ClientSecret = googleClientSecret;
                 options.CallbackPath = "/Auth/GoogleCallback";
                 options.SignInScheme = "ExternalCookie";
                 options.SaveTokens = false;
             });
+        }
 
         builder.Services.AddAuthorization();
         builder.Services.AddHttpClient<ApiClient>((serviceProvider, client) =>

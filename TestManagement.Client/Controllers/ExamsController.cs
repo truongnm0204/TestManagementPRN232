@@ -184,7 +184,8 @@ public class ExamsController : Controller
                     OptionCount = question.Options.Count,
                     IsSelected = selected != null,
                     Points = selected?.Points ?? 1,
-                    SortOrder = selected?.SortOrder ?? index + 1
+                    SortOrder = selected?.SortOrder ?? index + 1,
+                    Options = question.Options
                 };
             })
             .OrderByDescending(x => x.IsSelected)
@@ -203,7 +204,14 @@ public class ExamsController : Controller
                 OptionCount = x.Options.Count,
                 IsSelected = true,
                 Points = x.Points,
-                SortOrder = x.SortOrder
+                SortOrder = x.SortOrder,
+                Options = x.Options.Select(o => new QuestionOptionFormViewModel
+                {
+                    Label = o.Label,
+                    Content = o.Content,
+                    IsCorrect = o.IsCorrect,
+                    SortOrder = o.SortOrder
+                }).ToList()
             });
         candidates.AddRange(missingSelectedQuestions);
         candidates = candidates
